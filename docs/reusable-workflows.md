@@ -1276,7 +1276,7 @@ token needs `pull-requests: write`.
 
 ## sonarcloud.yml
 
-Unifies the sonarcloud.yml of rtok, ketch, cox, runa, crates-packages, slint_dart and stator.
+Unifies the sonarcloud.yml of rtok, ketch, cox, runa, crates, slint_dart and stator.
 Every step skips with a notice when `SONAR_TOKEN` is empty; coverage and scan are soft-fail
 unless `soft-fail: false`.
 

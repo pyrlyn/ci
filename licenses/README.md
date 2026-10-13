@@ -11,7 +11,7 @@ pyrlyn repository:
 | [`targets.yml`](targets.yml) | Target repositories and the path of each file there |
 
 Only GPL repositories (GPL-3.0-or-later) are targets: cox, rtok, ketch and runa get both
-files and the README line; crates-packages is GPL only (`commercial: null`, `readme: null`). `tools/license-kit` decides from the default branch: a
+files and the README line; crates is GPL only (`commercial: null`, `readme: null`). `tools/license-kit` decides from the default branch: a
 license file that reads as the GNU GPL and no root `Cargo.toml` / `package.json` license
 expression without GPL. A repository whose `LICENSE` is GPL but whose manifest says e.g.
 `MIT OR Apache-2.0` is a conflict and is skipped for the maintainer to decide.

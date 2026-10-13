@@ -1,7 +1,7 @@
 # License sync targets: every pyrlyn repository licensed under GPL-3.0 receives the canonical
 # files of this directory through a `chore/license-sync` pull request (`license-kit sync`) and
 # checks them in CI (license-check.yml). Repositories under another license are not listed.
-# Every target is GPL-3.0-or-later; crates-packages is GPL only (no commercial license).
+# Every target is GPL-3.0-or-later; crates is GPL only (no commercial license).
 #
 # canonical: kind -> file in licenses/. Per target, `files` maps the same kinds to the path in
 # that repository (keep each repository's existing filename; `null` leaves a kind out); `readme`
@@ -32,7 +32,7 @@ targets:
     files: {gpl: LICENSE, commercial: PRICING.md}
     readme: README.md
     auto-merge: false
-  - repo: pyrlyn/crates-packages
+  - repo: pyrlyn/crates
     files: {gpl: LICENSE, commercial: null}
     readme: null
     auto-merge: false
