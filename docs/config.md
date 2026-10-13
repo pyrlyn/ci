@@ -69,7 +69,7 @@ rust:       {enabled: false, events: [], matrix: [], rust-version: "", fmt-runs-
              setup-command: "", test-command: "...", doc-tests: true, build-command: "...",
              package-args: --workspace, feature-args: --all-features, locked: auto, msrv: "",
              msrv-command: "...", timeout-minutes: 60, cache-all-refs: false,
-             changed-only: false, full-package-args: --workspace}
+             changed-only: false, full-package-args: --workspace, mold: false}
 dotnet:     {enabled: true, dotnet-version: "", working-directory: ".", test-command: "",
              changed-only: false, runs-on: ubuntu-latest, timeout-minutes: 60}
 codeql:     {enabled: auto, languages: [actions], build-mode: none, build-command: "",

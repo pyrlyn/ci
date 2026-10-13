@@ -116,6 +116,7 @@ jobs:
       cache-all-refs: ${{ fromJSON(needs.config.outputs.json).rust.cache-all-refs }}
       changed-only: ${{ fromJSON(needs.config.outputs.json).rust.changed-only }}
       full-package-args: ${{ fromJSON(needs.config.outputs.json).rust.full-package-args }}
+      mold: ${{ fromJSON(needs.config.outputs.json).rust.mold }}
 
   # .NET tests. On by default: a no-op job (success, notice) until the repository has a .NET
   # project, then the full `dotnet test`. See ci-dotnet.yml.

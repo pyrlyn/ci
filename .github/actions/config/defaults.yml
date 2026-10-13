@@ -54,6 +54,9 @@ rust:
   # change always runs everything, with `full-package-args` instead of `package-args`.
   changed-only: false
   full-package-args: --workspace
+  # true: install mold (+ clang) on Linux runners for repositories whose mise.toml pins mold
+  # and enables it through [env]. See ci-rust.yml `mold`.
+  mold: false
 
 # .NET tests (ci-dotnet.yml): a no-op job until the repository has a *.csproj/*.fsproj/
 # *.vbproj or *.sln/*.slnx, then `dotnet test` for every solution. A .NET dependency change
