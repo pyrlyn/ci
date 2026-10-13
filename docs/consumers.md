@@ -13,7 +13,7 @@ Repositories with Actions enabled that call pyrlyn/ci, and the infra commit they
 | rtok | pipeline.yml -> pipeline.yml + `gate` action | `189816a` | `contents: read`, `security-events: write`, `actions: read` |
 | rtok | release-plz.yml -> release-plz.yml | `189816a` | `contents: write`, `pull-requests: write`, `actions: write` |
 
-Actions disabled (not consumers today): bindsmith, crates-packages, cross-code, swarfr, runa,
+Actions disabled (not consumers today): bindsmith, crates, cross-code, swarfr, runa,
 slint_dart, stator; private airtalk-cli, budget-app, riverpod, slint-dotnet. landing (Pages only)
 does not call infra.
 

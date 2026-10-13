@@ -1,7 +1,7 @@
 name: sonarcloud
 
 # Reusable SonarCloud analysis, unifying the sonarcloud.yml of rtok, ketch, cox, runa,
-# crates-packages, slint_dart and stator. Every step skips with a notice when SONAR_TOKEN is
+# crates, slint_dart and stator. Every step skips with a notice when SONAR_TOKEN is
 # empty (fork PRs, before the secret is added), so the job stays green. By default coverage and
 # the scan are soft-fail (`soft-fail: true`); set it false to make the analysis blocking.
 #

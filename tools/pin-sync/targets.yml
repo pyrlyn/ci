@@ -35,4 +35,4 @@ targets:
   - repo: pyrlyn/aulo
   - repo: pyrlyn/cla
   - repo: pyrlyn/landing
-  # crates-packages: add once Actions are enabled there.
+  # crates: add once Actions are enabled there.

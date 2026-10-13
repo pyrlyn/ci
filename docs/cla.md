@@ -136,9 +136,9 @@ The check uses two tokens:
 
 ```sh
 gh secret set CLA_APP_ID --org pyrlyn --visibility selected \
-  --repos cox,rtok,ketch,runa,crates-packages,infra
+  --repos cox,rtok,ketch,runa,crates,infra
 gh secret set CLA_APP_PRIVATE_KEY --org pyrlyn --visibility selected \
-  --repos cox,rtok,ketch,runa,crates-packages,infra < pyrlyn-cla.private-key.pem
+  --repos cox,rtok,ketch,runa,crates,infra < pyrlyn-cla.private-key.pem
 ```
 
 Instead of the app, a fine-grained PAT (resource owner `pyrlyn`, repository `cla-signatures`,
@@ -188,7 +188,7 @@ branch**, so the check starts working only after the caller is merged. The workf
 out pull request code and puts no event text into `run:`; keep it that way, since
 `pull_request_target` gives fork pull requests a write token and secrets.
 
-Actions must be enabled in the repository (crates-packages has them disabled today).
+Actions must be enabled in the repository (crates has them disabled today).
 
 ### 3. Turn it on (later, only when the CLA should be enforced)
 
