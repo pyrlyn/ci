@@ -370,20 +370,6 @@ jobs:
             echo "::notice title=ci-rust::no work; every matrix entry runs on $SKIP_RUNS_ON"
           fi
           echo "matrix=$m" >> "$GITHUB_OUTPUT"
-      # A wrapper that never reached sccache (e.g. clobbered by mise [env]) shows as zero
-      # compile requests; warn so it is not mistaken for a working cache.
-      - name: sccache stats
-        if: >-
-          always() && env.RUN == 'true' && inputs.sccache
-          && steps.sccache.outputs.enabled == 'true'
-        run: |
-          stats="$(sccache --show-stats --stats-format=json 2>/dev/null || true)"
-          sccache --show-stats || true
-          requests="$(printf '%s' "$stats" | jq -r '.stats.compile_requests // 0' 2>/dev/null || echo 0)"
-          if [ "${requests:-0}" = 0 ]; then
-            echo "::warning title=sccache::0 compile requests: rustc did not go through sccache (RUSTC_WRAPPER=${RUSTC_WRAPPER:-unset}, cargo sees: $(mise env 2>/dev/null | grep RUSTC_WRAPPER || true))"
-          fi
-
       - name: Cancel the run on failure
         if: failure() && inputs.cancel-run-on-failure
         uses: $/.github/actions/cancel-run # nosemgrep: github-actions-mutable-action-tag
@@ -699,6 +685,20 @@ jobs:
           BUILD_COMMAND: ${{ inputs.build-command }}
           FEATURE_ARGS: ${{ inputs.feature-args }}
         run: eval "$BUILD_COMMAND"
+      # A wrapper that never reached sccache (e.g. clobbered by mise [env]) shows as zero
+      # compile requests; warn so it is not mistaken for a working cache.
+      - name: sccache stats
+        if: >-
+          always() && env.RUN == 'true' && inputs.sccache
+          && steps.sccache.outputs.enabled == 'true'
+        run: |
+          stats="$(sccache --show-stats --stats-format=json 2>/dev/null || true)"
+          sccache --show-stats || true
+          requests="$(printf '%s' "$stats" | jq -r '.stats.compile_requests // 0' 2>/dev/null || echo 0)"
+          if [ "${requests:-0}" = 0 ]; then
+            echo "::warning title=sccache::0 compile requests: rustc did not go through sccache (RUSTC_WRAPPER=${RUSTC_WRAPPER:-unset}, cargo sees: $(mise env 2>/dev/null | grep RUSTC_WRAPPER || true))"
+          fi
+
       - name: Cancel the run on failure
         if: failure() && inputs.cancel-run-on-failure
         uses: $/.github/actions/cancel-run # nosemgrep: github-actions-mutable-action-tag
