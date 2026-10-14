@@ -121,6 +121,11 @@ on:
         type: string
         required: false
         default: --workspace
+      rust-mold:
+        description: ci-rust.yml `mold` (install mold and clang on Linux runners).
+        type: boolean
+        required: false
+        default: false
       codeql:
         description: Run codeql.yml.
         type: boolean
@@ -240,6 +245,7 @@ jobs:
       cache-all-refs: ${{ inputs.rust-cache-all-refs }}
       changed-only: ${{ inputs.rust-changed-only }}
       full-package-args: ${{ inputs.rust-full-package-args }}
+      mold: ${{ inputs.rust-mold }}
 
   codeql:
     if: >-
