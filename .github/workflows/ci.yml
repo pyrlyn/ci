@@ -282,7 +282,7 @@ jobs:
           JOB_ENV: ${{ matrix.env }}
         run: jq -r 'to_entries[] | "\(.key)=\(.value)"' <<<"$JOB_ENV" >> "$GITHUB_ENV"
       - if: matrix.mise == 'true'
-        uses: jdx/mise-action@9149ea85001c7435d5a66bb127d6a1b6227cb0a5 # v5.0.0
+        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
           install_args: ${{ matrix.mise-install-args }}
       - name: rustc is the mise.toml pin
@@ -298,7 +298,7 @@ jobs:
         with:
           key: ${{ matrix.name }}
       - if: matrix.tools != ''
-        uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
+        uses: taiki-e/install-action@f7e5d7c961414b23f5b25b2da9294395d08513ad # v2.87.26
         with:
           tool: ${{ matrix.tools }}
       - name: Setup
