@@ -181,3 +181,15 @@ A required check from a matrix job, or from a job of a called workflow, cannot b
 job level (the skipped job reports one check under its raw name and the required ones wait).
 For ci-rust.yml pass `skip: ${{ needs.changes.outputs.docs-only == 'true' }}`: the matrix still
 expands and every step is a no-op. Gate the steps of a local matrix job the same way.
+
+## Private repositories
+
+`is_private: true` at the top level of `.github/infra.yml` moves a repository to CircleCI
+(`.circleci/config.yml` in that repository). Every check and custom job of this workflow is
+skipped and the gate counts them as passed, so a required `gate` still reports success.
+Absent or `false` changes nothing for the checks.
+
+```yaml
+version: 1
+is_private: true
+```
