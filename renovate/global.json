@@ -6,5 +6,5 @@
   "onboarding": false,
   "requireConfig": "optional",
   "allowedUnsafeExecutions": ["mise"],
-  "extends": ["local>pyrlyn/ci//renovate/mise"]
+  "extends": ["local>pyrlyn/ci//renovate/mise", "local>pyrlyn/ci//renovate/deps"]
 }
