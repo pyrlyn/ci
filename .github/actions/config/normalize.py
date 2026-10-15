@@ -67,12 +67,18 @@ def main():
     if cfg.get("version") != 1:
         fail(f"version must be 1, got {cfg.get('version')!r}")
     unknown = set(cfg) - set(CHECKS) - {"version", "cancel-run-on-failure", "skip-drafts",
-                                          "upload-sarif", "jobs", "docs-only"}
+                                          "upload-sarif", "jobs", "docs-only", "is_private"}
     if unknown:
         fail(f"unknown top-level keys: {sorted(unknown)}")
 
     cfg["skip-drafts"] = bool(cfg.get("skip-drafts", True))
     skip_all = cfg["skip-drafts"] and draft
+    # is_private: true moves the repository to CircleCI (docs/config.md, "Private repositories"):
+    # every check and custom job is skipped, and the gate counts them as passed. Only an
+    # explicit `true` does this; absent or false leaves everything as before.
+    is_private = cfg.get("is_private", False)
+    if not isinstance(is_private, bool):
+        fail(f"is_private must be true or false, got {is_private!r}")
 
     docs = cfg.get("docs-only") or {}
     if not isinstance(docs, dict):
@@ -100,6 +106,7 @@ def main():
         c = cfg.get(name) or {}
         run = (as_bool(c.get("enabled", False), private, f"{name}.enabled")
                and event_ok(c.get("events"), event, name) and not skip_all
+               and not is_private
                and not (docs_only and not c.get("docs-only", False)))
         c["run"] = run
         if not run:
@@ -137,7 +144,7 @@ def main():
         if extra:
             fail(f"{where} ({raw['name']}): unknown keys {sorted(extra)}")
         job = {**JOB_DEFAULTS, **raw}
-        if not job["enabled"] or skip_all or not event_ok(job["events"], event, where):
+        if not job["enabled"] or skip_all or is_private or not event_ok(job["events"], event, where):
             continue
         if docs_only and not job["docs-only"]:
             continue
