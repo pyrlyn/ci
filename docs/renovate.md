@@ -89,3 +89,7 @@ Pull requests opened by the app come from `<app-slug>[bot]`. Where the CLA check
 
 [renovate-app]: https://docs.renovatebot.com/modules/platform/github/#running-as-a-github-app
 [unsafe]: https://docs.renovatebot.com/self-hosted-configuration/#allowedunsafeexecutions
+
+## Dependency updates (proposed)
+
+`renovate/deps.json` extends the mise preset with the `cargo`, `github-actions` and `npm` managers, `automerge: false`, `platformAutomerge: false`, `prConcurrentLimit: 3` and a Monday schedule. Renovate only opens PRs; they are merged by hand. Before relying on it, remove the matching ecosystems from each repository's `.github/dependabot.yml` so the two tools do not open duplicate PRs. The workflow needs the `RENOVATE_APP_CLIENT_ID` and `RENOVATE_APP_PRIVATE_KEY` secrets (or a PAT) set first.

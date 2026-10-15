@@ -1,0 +1,14 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "pyrlyn shared Renovate preset: dependency updates (Cargo, GitHub Actions, npm, mise). Never merges anything itself.",
+  "enabledManagers": ["mise", "cargo", "github-actions", "npm"],
+  "automerge": false,
+  "platformAutomerge": false,
+  "prConcurrentLimit": 3,
+  "schedule": ["before 6am on monday"],
+  "packageRules": [
+    { "matchManagers": ["cargo"], "groupName": "cargo dependencies", "matchUpdateTypes": ["minor", "patch"] },
+    { "matchManagers": ["github-actions"], "groupName": "github actions" },
+    { "matchManagers": ["npm"], "groupName": "npm dependencies", "matchUpdateTypes": ["minor", "patch"] }
+  ]
+}
