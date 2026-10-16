@@ -114,12 +114,14 @@ The archive holds one feature set (`nextest-archive-args`, default `--all-target
 
 ## sccache with R2
 
-`sccache: true` installs sccache (`mozilla-actions/sccache-action`) and sets `RUSTC_WRAPPER`,
+`sccache: true` installs [`sccache-r2`](https://crates.io/crates/sccache-r2) (pyrlyn/crates), which validates the R2 config and
+writes the env, then sccache (`mozilla-actions/sccache-action`). It sets `RUSTC_WRAPPER`,
 `CARGO_INCREMENTAL=0`, `SCCACHE_REGION=auto` and the R2 settings. Pull requests only read the
 cache (`SCCACHE_S3_RW_MODE=READ_ONLY`). It needs the secrets `R2_ACCESS_KEY_ID` and
 `R2_SECRET_ACCESS_KEY` (pass them with `secrets: inherit`, or explicitly) and the variables
 `SCCACHE_BUCKET` and `SCCACHE_ENDPOINT`. If any is missing the step clears `RUSTC_WRAPPER`
-(also one set by the caller's `mise.toml`), prints a notice and the build runs without sccache.
+(also one set by the caller's `mise.toml`), prints a notice and the build runs without sccache. A malformed endpoint or bucket name fails
+the job.
 
 ## Secrets
 
