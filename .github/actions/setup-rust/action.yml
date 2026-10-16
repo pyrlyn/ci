@@ -31,6 +31,13 @@ inputs:
     description: Extra rust-cache key, e.g. the job name, when jobs build different things.
     required: false
     default: ""
+  sweep-days:
+    description: >-
+      With cache "true" on the default branch, drop build artifacts unused for this many days
+      (cargo-sweep) after the cache is restored. Needs "cargo:cargo-sweep" in the caller's
+      mise.toml; skipped without it. "0" turns it off.
+    required: false
+    default: "1"
 outputs:
   version:
     description: The pinned Rust version (rustc), e.g. 1.98.1.
@@ -71,3 +78,19 @@ runs:
         key: ${{ inputs.cache-key }}
         save-if: >-
           ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+    - if: >-
+        inputs.cache == 'true' && inputs.sweep-days != '0'
+        && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      name: cargo-sweep the restored cache
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        SWEEP_DAYS: ${{ inputs.sweep-days }}
+      run: |
+        set -euo pipefail
+        if ! grep -q 'cargo:cargo-sweep' mise.toml; then
+          echo "cargo-sweep is not pinned in mise.toml; skipping"
+          exit 0
+        fi
+        mise install cargo:cargo-sweep
+        mise exec -- cargo sweep --recursive --time "$SWEEP_DAYS" .
