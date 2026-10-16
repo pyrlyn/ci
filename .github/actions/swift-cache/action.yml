@@ -1,0 +1,36 @@
+name: swift-cache
+description: >-
+  Cache SwiftPM's clone cache plus the caller's build directories (package .build, DerivedData)
+  on a macOS runner. The runner image is fresh per job, so without this every run re-fetches and
+  rebuilds every Swift dependency. The key carries the dependency pins, the Xcode major and the
+  commit: an exact hit is rare, so the newest cache for the same pins (then the same Xcode) seeds
+  an incremental build, and the job saves a fresh one. Mind GitHub's 10 GB cache budget per
+  repository: keep `paths` to build output.
+inputs:
+  paths:
+    description: Newline-separated build directories to cache (globs allowed), relative to the workspace.
+    required: true
+  hash-files:
+    description: Newline-separated globs of the files that pin the dependencies (Package.resolved, Package.swift, project.yml).
+    required: true
+  key-prefix:
+    description: Distinguishes caches of different jobs in one repository (e.g. swift-test, swift-ui).
+    required: false
+    default: swift
+  xcode:
+    description: Xcode major in the key, so a toolchain change does not reuse stale module caches.
+    required: false
+    default: "27"
+runs:
+  using: composite
+  steps:
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ~/Library/Caches/org.swift.swiftpm
+          ~/Library/org.swift.swiftpm
+          ${{ inputs.paths }}
+        key: ${{ inputs.key-prefix }}-${{ runner.os }}-${{ runner.arch }}-xcode${{ inputs.xcode }}-${{ hashFiles(inputs.hash-files) }}-${{ github.sha }}
+        restore-keys: |
+          ${{ inputs.key-prefix }}-${{ runner.os }}-${{ runner.arch }}-xcode${{ inputs.xcode }}-${{ hashFiles(inputs.hash-files) }}-
+          ${{ inputs.key-prefix }}-${{ runner.os }}-${{ runner.arch }}-xcode${{ inputs.xcode }}-
