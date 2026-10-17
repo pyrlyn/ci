@@ -1,0 +1,88 @@
+name: macos-fallback
+
+# TEMPORARY fallback: the macOS checks of self-test.yml on a GitHub-hosted runner label of your
+# choice (default macos-latest), for when the `xcode-27` jobs stay queued. Never self-hosted.
+# macos-latest / macos-26 ship Xcode 26.x, so Xcode 27 is not selected unless `xcode-version`
+# is set (it then fails when the image lacks that Xcode). Manual (workflow_dispatch) or called
+# from another workflow; it does not replace any existing job and changes no `runs-on`.
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: GitHub-hosted macOS runner label (macos-latest, macos-26, macos-15).
+        required: false
+        default: macos-latest
+        type: string
+      xcode-version:
+        description: Xcode prefix for setup-xcode; empty keeps the image default.
+        required: false
+        default: ""
+        type: string
+  workflow_call:
+    inputs:
+      runner:
+        description: GitHub-hosted macOS runner label (macos-latest, macos-26, macos-15).
+        required: false
+        default: macos-latest
+        type: string
+      xcode-version:
+        description: Xcode prefix for setup-xcode; empty keeps the image default.
+        required: false
+        default: ""
+        type: string
+
+concurrency:
+  group: macos-fallback-${{ github.ref }}-${{ inputs.runner }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  setup-xcode:
+    name: setup-xcode (${{ inputs.runner }})
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: xcode
+        uses: ./.github/actions/setup-xcode
+        with:
+          version: ${{ inputs.xcode-version }}
+      - name: Report the Xcode in use
+        run: xcodebuild -version
+
+  macos-sign:
+    name: macos-sign (no secrets, ${{ inputs.runner }})
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: cp /bin/echo "$RUNNER_TEMP/echo-copy"
+      - id: sign
+        uses: ./.github/actions/macos-sign
+        with:
+          paths: ${{ runner.temp }}/echo-copy
+      - name: Skipped without secrets
+        env:
+          SIGNED: ${{ steps.sign.outputs.signed }}
+        run: '[ "$SIGNED" = "false" ]'
+
+  rust-aarch64-apple-darwin:
+    name: setup-rust aarch64-apple-darwin (${{ inputs.runner }})
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-rust
+        with:
+          working-directory: tests/fixtures/rust-crate
+      - name: Build the fixture for the host target
+        working-directory: tests/fixtures/rust-crate
+        run: cargo build --locked --target aarch64-apple-darwin
