@@ -165,7 +165,7 @@ jobs:
             for ((i = 0; i < ${#s}; i++)); do
               c="${s:i:1}"
               case "$c" in
-                [A-Za-z]) out+="[$(printf '%s' "$c" | tr A-Z a-z)$(printf '%s' "$c" | tr a-z A-Z)]" ;;
+                [A-Za-z]) out+="[$(printf '%s' "$c" | tr '[:upper:]' '[:lower:]')$(printf '%s' "$c" | tr '[:lower:]' '[:upper:]')]" ;;
                 *) out+="$c" ;;
               esac
             done
