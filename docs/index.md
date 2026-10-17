@@ -153,3 +153,22 @@ jdx/mise-action@*
 Swatinem/rust-cache@*
 taiki-e/install-action@*
 ```
+
+## Per-version snapshots
+
+Snapshot tests that depend on the Xcode / macOS version keep their images in
+`<tests>/Snapshots/<key>/`. `tools/snapshots/snapshot_version.py` builds the key
+(`xcode27.1-27A9275-macos27.0.1`; `<PREFIX>_SNAPSHOT_VERSION` overrides it) and has `probe`,
+`status` and `migrate` subcommands. The `snapshot-version` composite action prints the runner's
+toolchain, writes the key to the job summary and exports `<env-prefix>_SNAPSHOT_VERSION`.
+`tools/snapshots/swift/VersionedSnapshots.swift` is copied into a Swift test target and replaces
+`assertSnapshot` with `assertVersionedSnapshot`: no directory for the key skips the test, a
+directory compares, and `<PREFIX>_SNAPSHOT_RECORD=1` records into it. A new version joins by
+committing its directory. Rust `insta` text snapshots do not depend on the toolchain and do not use this.
+
+```yaml
+- uses: pyrlyn/ci/.github/actions/snapshot-version@<full commit sha>
+  with:
+    env-prefix: COX
+    override: ""   # e.g. hosted-pending until the real key is known
+```
