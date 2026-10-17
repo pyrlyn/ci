@@ -1,0 +1,13 @@
+name: metal-toolchain
+description: >-
+  Download the Metal toolchain for the Xcode that setup-xcode just selected. Since Xcode 26 the
+  Metal toolchain is a separate component, and the xcode-27 runner image does not ship it for
+  Xcode 27: a package with a .metal shader (SwiftTerm's Shaders.metal) then fails to compile.
+  Run it after setup-xcode, on a macOS runner.
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        xcodebuild -showComponent MetalToolchain || true
+        xcodebuild -downloadComponent MetalToolchain
