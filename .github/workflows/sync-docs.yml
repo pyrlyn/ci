@@ -158,16 +158,32 @@ jobs:
           # to-do, done and roadmap notes, agent instructions, maintainer runbooks and asset notes,
           # plus the caller's extra-excludes. The patterns carry no leading / so they match at any
           # depth; --delete-excluded removes any copy already on the site.
-          internal=(
-            --exclude='research/' --exclude='research*.md'
-            --exclude='qa/' --exclude='*audit*.md'
-            --exclude='design/' --exclude='brand/' --exclude='assets/' --exclude='adr/' --exclude='notes/'
-            --exclude='proposals/' --exclude='*proposal*.md'
-            --exclude='plan*.md' --exclude='PLAN*.md' --exclude='todo*.md' --exclude='TODO*.md'
-            --exclude='next*.md' --exclude='done*.md' --exclude='roadmap*.md' --exclude='ideas.md'
-            --exclude='AGENTS.md' --exclude='CLAUDE.md' --exclude='agency.md'
-            --exclude='sonarcloud-setup.md' --exclude='release.md' --exclude='release-*.md'
-          )
+          # Names are matched case-insensitively (plan.md, PLAN.md and Plan.md are all left out):
+          # ci_glob turns each letter into a [xX] bracket, which rsync globs understand.
+          ci_glob() {
+            local s="$1" out="" c i
+            for ((i = 0; i < ${#s}; i++)); do
+              c="${s:i:1}"
+              case "$c" in
+                [A-Za-z]) out+="[$(printf '%s' "$c" | tr A-Z a-z)$(printf '%s' "$c" | tr a-z A-Z)]" ;;
+                *) out+="$c" ;;
+              esac
+            done
+            printf '%s' "$out"
+          }
+          internal=()
+          for pattern in \
+            'research/' 'research*.md' 'qa/' '*audit*.md' \
+            'design/' 'brand/' 'assets/' 'adr/' 'notes/' 'proposals/' '*proposal*.md' \
+            'plan*.md' 'todo*.md' 'next*.md' 'done*.md' 'roadmap*.md' 'ideas.md' 'notes.md' \
+            'readme.md' 'claude.md' 'agency.md' \
+            'sonarcloud-setup.md' 'release.md' 'release-*.md'
+          do
+            internal+=("--exclude=$(ci_glob "$pattern")")
+          done
+          # AGENTS.md (agent instructions) only in this exact spelling: a user-facing agents.md is a
+          # different page (rtok documents agent integrations there).
+          internal+=(--exclude='AGENTS.md')
           while read -r pattern; do
             if [ -n "$pattern" ]; then internal+=("--exclude=$pattern"); fi
           done <<< "$EXTRA_EXCLUDES"
