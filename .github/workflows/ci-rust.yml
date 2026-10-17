@@ -460,7 +460,14 @@ jobs:
         uses: jdx/mise-action@9149ea85001c7435d5a66bb127d6a1b6227cb0a5 # v5.0.0
         with:
           working_directory: ${{ inputs.working-directory }}
-          install_args: ${{ inputs.mold && runner.os == 'Linux' && format('{0} mold', inputs.mise-install-args) || inputs.mise-install-args }}
+          # sccache: true also installs mise's sccache. A caller's mise.toml [env] may set
+          # RUSTC_WRAPPER from `mise which sccache`; cargo runs through the mise shim, which
+          # re-applies that [env] over $GITHUB_ENV, so without the tool installed the wrapper
+          # resolves to empty and rustc bypasses sccache. Not on Windows (no wrapper there).
+          install_args: >-
+            ${{ inputs.mise-install-args }}
+            ${{ inputs.mold && runner.os == 'Linux' && 'mold' || '' }}
+            ${{ inputs.sccache && runner.os != 'Windows' && 'sccache' || '' }}
 
       # mold links through clang. ubuntu-latest ships it; install it when a runner does not.
       - if: env.RUN == 'true' && inputs.mold && runner.os == 'Linux' && inputs.rust-version == ''
@@ -678,6 +685,20 @@ jobs:
           BUILD_COMMAND: ${{ inputs.build-command }}
           FEATURE_ARGS: ${{ inputs.feature-args }}
         run: eval "$BUILD_COMMAND"
+      # A wrapper that never reached sccache (e.g. clobbered by mise [env]) shows as zero
+      # compile requests; warn so it is not mistaken for a working cache.
+      - name: sccache stats
+        if: >-
+          always() && env.RUN == 'true' && inputs.sccache
+          && steps.sccache.outputs.enabled == 'true'
+        run: |
+          stats="$(sccache --show-stats --stats-format=json 2>/dev/null || true)"
+          sccache --show-stats || true
+          requests="$(printf '%s' "$stats" | jq -r '.stats.compile_requests // 0' 2>/dev/null || echo 0)"
+          if [ "${requests:-0}" = 0 ]; then
+            echo "::warning title=sccache::0 compile requests: rustc did not go through sccache (RUSTC_WRAPPER=${RUSTC_WRAPPER:-unset}, cargo sees: $(mise env 2>/dev/null | grep RUSTC_WRAPPER || true))"
+          fi
+
       - name: Cancel the run on failure
         if: failure() && inputs.cancel-run-on-failure
         uses: $/.github/actions/cancel-run # nosemgrep: github-actions-mutable-action-tag
