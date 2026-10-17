@@ -1,0 +1,130 @@
+name: macos-fallback
+
+# TEMPORARY fallback for the macOS checks of self-test.yml while the `xcode-27` jobs stay queued.
+# Default target: Ivan's local Mac, a self-hosted runner (labels self-hosted, macOS, ARM64;
+# the runner also carries xcode-27-local). Override `runner` with a JSON array of labels or a
+# GitHub-hosted label, e.g. '["macos-latest"]'. Xcode 27.x is required: self-hosted jobs use
+# DEVELOPER_DIR=/Applications/Xcode.app, hosted jobs use setup-xcode, and every job fails
+# if `xcodebuild -version` is not 27.x. SECURITY: there is deliberately NO pull_request / pull_request_target trigger, so code
+# from forks or outside contributors can never run on the self-hosted Mac. It runs only when
+# someone triggers it manually (workflow_dispatch) or calls it from another workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: JSON array of runner labels, e.g. ["macos-latest"] for GitHub-hosted.
+        required: false
+        default: '["self-hosted","macOS","ARM64"]'
+        type: string
+      xcode-version:
+        description: Xcode major (27 or 27.1) that must be in use; the job fails on any other version.
+        required: false
+        default: "27"
+        type: string
+  workflow_call:
+    inputs:
+      runner:
+        description: JSON array of runner labels, e.g. ["macos-latest"] for GitHub-hosted.
+        required: false
+        default: '["self-hosted","macOS","ARM64"]'
+        type: string
+      xcode-version:
+        description: Xcode major (27 or 27.1) that must be in use; the job fails on any other version.
+        required: false
+        default: "27"
+        type: string
+
+concurrency:
+  group: macos-fallback-${{ github.ref }}-${{ inputs.runner }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  setup-xcode:
+    name: setup-xcode (${{ inputs.runner }})
+    runs-on: ${{ fromJSON(inputs.runner) }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Select Xcode (self-hosted Mac)
+        if: runner.environment == 'self-hosted'
+        run: echo "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer" >> "$GITHUB_ENV"
+      - name: Select Xcode (GitHub-hosted)
+        if: runner.environment != 'self-hosted'
+        uses: ./.github/actions/setup-xcode
+        with:
+          version: ${{ inputs.xcode-version }}
+      - name: Require Xcode 27.x
+        env:
+          WANT: ${{ inputs.xcode-version }}
+        run: |
+          got="$(xcodebuild -version | sed -n 's/^Xcode //p' | head -n1)"
+          echo "Xcode in use: $got"
+          case "$got" in "${WANT:-27}" | "${WANT:-27}".*) ;; *) echo "::error::need Xcode ${WANT:-27}.x, got $got"; exit 1 ;; esac
+
+  macos-sign:
+    name: macos-sign (no secrets, ${{ inputs.runner }})
+    runs-on: ${{ fromJSON(inputs.runner) }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Select Xcode (self-hosted Mac)
+        if: runner.environment == 'self-hosted'
+        run: echo "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer" >> "$GITHUB_ENV"
+      - name: Select Xcode (GitHub-hosted)
+        if: runner.environment != 'self-hosted'
+        uses: ./.github/actions/setup-xcode
+        with:
+          version: ${{ inputs.xcode-version }}
+      - name: Require Xcode 27.x
+        env:
+          WANT: ${{ inputs.xcode-version }}
+        run: |
+          got="$(xcodebuild -version | sed -n 's/^Xcode //p' | head -n1)"
+          echo "Xcode in use: $got"
+          case "$got" in "${WANT:-27}" | "${WANT:-27}".*) ;; *) echo "::error::need Xcode ${WANT:-27}.x, got $got"; exit 1 ;; esac
+      - run: cp /bin/echo "$RUNNER_TEMP/echo-copy"
+      - id: sign
+        uses: ./.github/actions/macos-sign
+        with:
+          paths: ${{ runner.temp }}/echo-copy
+      - name: Skipped without secrets
+        env:
+          SIGNED: ${{ steps.sign.outputs.signed }}
+        run: '[ "$SIGNED" = "false" ]'
+
+  rust-aarch64-apple-darwin:
+    name: setup-rust aarch64-apple-darwin (${{ inputs.runner }})
+    runs-on: ${{ fromJSON(inputs.runner) }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Select Xcode (self-hosted Mac)
+        if: runner.environment == 'self-hosted'
+        run: echo "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer" >> "$GITHUB_ENV"
+      - name: Select Xcode (GitHub-hosted)
+        if: runner.environment != 'self-hosted'
+        uses: ./.github/actions/setup-xcode
+        with:
+          version: ${{ inputs.xcode-version }}
+      - name: Require Xcode 27.x
+        env:
+          WANT: ${{ inputs.xcode-version }}
+        run: |
+          got="$(xcodebuild -version | sed -n 's/^Xcode //p' | head -n1)"
+          echo "Xcode in use: $got"
+          case "$got" in "${WANT:-27}" | "${WANT:-27}".*) ;; *) echo "::error::need Xcode ${WANT:-27}.x, got $got"; exit 1 ;; esac
+      - uses: ./.github/actions/setup-rust
+        with:
+          working-directory: tests/fixtures/rust-crate
+      - name: Build the fixture for the host target
+        working-directory: tests/fixtures/rust-crate
+        run: cargo build --locked --target aarch64-apple-darwin
