@@ -275,11 +275,12 @@ jobs:
         include: ${{ fromJSON(needs.config.outputs.jobs) }}
     # Org variable MACOS_CI_DISABLED=true: macOS entries keep their check name but run as
     # no-ops on ubuntu (MACOS_OFF makes every step below skip).
-    runs-on: ${{ vars.MACOS_CI_DISABLED == 'true' && (startsWith(matrix.runs-on, 'macos') || startsWith(matrix.runs-on, 'xcode')) && 'ubuntu-latest' || matrix.runs-on }}
+    # TEMP: self-hosted xcode-27-local until hosted xcode-27 exists (every macOS label maps to it)
+    runs-on: ${{ (vars.MACOS_CI_DISABLED == 'true' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)) && (startsWith(matrix.runs-on, 'macos') || startsWith(matrix.runs-on, 'xcode')) && 'ubuntu-latest' || (startsWith(matrix.runs-on, 'macos') || startsWith(matrix.runs-on, 'xcode')) && 'xcode-27-local' || matrix.runs-on }}
     timeout-minutes: ${{ matrix.timeout-minutes }}
     continue-on-error: ${{ matrix.allow-failure }}
     env:
-      MACOS_OFF: ${{ vars.MACOS_CI_DISABLED == 'true' && (startsWith(matrix.runs-on, 'macos') || startsWith(matrix.runs-on, 'xcode')) }}
+      MACOS_OFF: ${{ (vars.MACOS_CI_DISABLED == 'true' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)) && (startsWith(matrix.runs-on, 'macos') || startsWith(matrix.runs-on, 'xcode')) }}
     defaults:
       run:
         shell: bash

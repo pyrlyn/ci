@@ -64,7 +64,13 @@ runs:
           ls -d /Applications/Xcode*.app >&2 || true
           exit 1
         fi
-        sudo xcode-select -s "$best/Contents/Developer"
+        if [ "${RUNNER_ENVIRONMENT:-}" = self-hosted ]; then
+          # TEMP: self-hosted xcode-27-local until hosted xcode-27 exists. No sudo on the Mac runner.
+          echo "DEVELOPER_DIR=$best/Contents/Developer" >> "$GITHUB_ENV"
+          export DEVELOPER_DIR="$best/Contents/Developer"
+        else
+          sudo xcode-select -s "$best/Contents/Developer"
+        fi
         echo "Selected $best (Xcode $best_version)"
         xcodebuild -version
         echo "path=$best" >> "$GITHUB_OUTPUT"

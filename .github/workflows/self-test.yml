@@ -413,8 +413,10 @@ jobs:
     # Org variable MACOS_CI_DISABLED=true skips the macOS jobs (a skipped job reports success).
     if: >-
       vars.MACOS_CI_DISABLED != 'true'
-      && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
-    runs-on: xcode-27
+      && (github.event_name != 'pull_request' || (!github.event.pull_request.draft
+      && github.event.pull_request.head.repo.full_name == github.repository))
+    # TEMP: self-hosted xcode-27-local until hosted xcode-27 exists
+    runs-on: xcode-27-local
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -436,7 +438,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON(vars.MACOS_CI_DISABLED == 'true' && '["ubuntu-latest"]' || '["xcode-27", "ubuntu-latest"]') }}
+        # TEMP: self-hosted xcode-27-local until hosted xcode-27 exists (fork PRs get no macOS entry)
+        os: ${{ fromJSON((vars.MACOS_CI_DISABLED == 'true' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository)) && '["ubuntu-latest"]' || '["xcode-27-local", "ubuntu-latest"]') }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

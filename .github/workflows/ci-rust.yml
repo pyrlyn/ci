@@ -297,11 +297,12 @@ env:
   CARGO_TERM_COLOR: always
   PACKAGE_ARGS: ${{ inputs.package-args }}
   FEATURE_ARGS: ${{ inputs.feature-args }}
+  # TEMP: self-hosted xcode-27-local until hosted xcode-27 exists
   SHARED_MATRIX: >-
     [
     {"os": "ubuntu-latest", "target": "x86_64-unknown-linux-gnu"},
     {"os": "ubuntu-24.04-arm", "target": "aarch64-unknown-linux-gnu"},
-    {"os": "xcode-27", "target": "aarch64-apple-darwin"},
+    {"os": "xcode-27-local", "target": "aarch64-apple-darwin"},
     {"os": "windows-latest", "target": "x86_64-pc-windows-msvc"}
     ]
 
@@ -366,6 +367,8 @@ jobs:
           RUN: ${{ steps.scope.outputs.run }}
           SKIP_RUNS_ON: ${{ inputs.skip-runs-on }}
           MACOS_DISABLED: ${{ vars.MACOS_CI_DISABLED }}
+          # A pull request from a fork never reaches the self-hosted Mac (its macOS entries are no-ops).
+          IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
         run: |
           set -euo pipefail
           m="$MATRIX"
@@ -373,12 +376,15 @@ jobs:
             m=$(jq -c --arg os "$SKIP_RUNS_ON" 'map(.os = $os)' <<<"$m")
             echo "::notice title=ci-rust::no work; every matrix entry runs on $SKIP_RUNS_ON"
           fi
+          # TEMP: self-hosted xcode-27-local until hosted xcode-27 exists
+          # Every macOS entry (macos-*, xcode-27*) runs on the one self-hosted Mac, `xcode-27-local`.
+          m=$(jq -c 'map(if (.os | test("^(macos|xcode)")) then .os = "xcode-27-local" else . end)' <<<"$m")
           # Org variable MACOS_CI_DISABLED=true: every macOS entry (macos-*, xcode-27*) keeps its
           # check name but runs as a no-op on ubuntu (`disabled` makes its steps no-ops).
-          if [ "$MACOS_DISABLED" = true ]; then
+          if [ "$MACOS_DISABLED" = true ] || [ "$IS_FORK" = true ]; then
             m=$(jq -c --arg os "${SKIP_RUNS_ON:-ubuntu-latest}" \
               'map(if (.os | test("^(macos|xcode)")) then .os = $os | .disabled = true else . end)' <<<"$m")
-            echo "::notice title=ci-rust::MACOS_CI_DISABLED is true; macOS entries are no-ops"
+            echo "::notice title=ci-rust::MACOS_CI_DISABLED is true or the PR is from a fork; macOS entries are no-ops"
           fi
           echo "matrix=$m" >> "$GITHUB_OUTPUT"
           # Linux entries run first; Windows, macOS and the rest wait for them (`rust-other`).
