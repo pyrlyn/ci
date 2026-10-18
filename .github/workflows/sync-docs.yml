@@ -13,6 +13,7 @@ name: sync-docs
 #     (removed there when the source is gone), and <docs-dir>/<lang>/**/*.md ->
 #     content/docs/<repo name>/<lang>/, each mirrored on its own (same filter); the English
 #     mirror leaves the locale folders alone.
+# Logic: tools/sync-docs/sync_docs.py (Python, stdlib; tests in tests/sync-docs).
 # Auth: a write-enabled deploy key on the site repository only, passed as SITE_DEPLOY_KEY;
 # GITHUB_TOKEN stays read-only. The caller owns the triggers and the `concurrency` group
 # (`sync-docs`, never cancelled) because a callee group would be keyed on the caller anyway.
@@ -95,159 +96,48 @@ jobs:
           set -euo pipefail
           git fetch --depth 1 origin "$PUBLISH_AT"
           git checkout --detach FETCH_HEAD
-      - name: Copy docs/site.md into the site repository
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: pyrlyn/ci
+          path: infra
+          persist-credentials: false
+          sparse-checkout: tools/sync-docs
+      - name: Copy the project cards into the site repository
         env:
           PROJECT: ${{ github.event.repository.name }}
           DOCS_DIR: ${{ inputs.docs-dir }}
           SITE_REPOSITORY: ${{ inputs.site-repository }}
           SITE_BRANCH: ${{ inputs.site-branch }}
+          LOCALES: ${{ inputs.locales }}
+          EXTRA_EXCLUDES: ${{ inputs.extra-excludes }}
           REF_TYPE: ${{ github.ref_type }}
           REF_NAME: ${{ github.ref_name }}
-          LOCALES: ${{ inputs.locales }}
-        run: |
-          set -euo pipefail
-          # "" is English: <docs-dir>/site.md -> content/projects/<name>.md (required). A
-          # localized card is optional: <docs-dir>/<lang>/site.md -> content/projects/<lang>/.
-          # LOCALES is a word list.
-          # shellcheck disable=SC2086
-          for lang in "" $LOCALES; do
-            src="source/$DOCS_DIR/${lang:+$lang/}site.md"
-            dest="site/content/projects/${lang:+$lang/}${PROJECT}.md"
-            if [ ! -f "$src" ]; then
-              if [ -z "$lang" ]; then echo "::error::$DOCS_DIR/site.md is missing"; exit 1; fi
-              rm -f "$dest"
-              continue
-            fi
-            mkdir -p "$(dirname "$dest")"
-            cp "$src" "$dest"
-            if [ "$REF_TYPE" = "tag" ]; then
-              VERSION="${REF_NAME#v}" DEST="$dest" python3 - <<'PY'
-          import os, re
-          path, version = os.environ["DEST"], os.environ["VERSION"]
-          text = open(path, encoding="utf-8").read()
-          m = re.match(r"---\n(.*?\n)---\n", text, re.S)
-          if m:
-              fm = m.group(1)
-              line = f'version: "{version}"\n'
-              if re.search(r"^version:.*\n", fm, re.M):
-                  fm = re.sub(r"^version:.*\n", line, fm, count=1, flags=re.M)
-              else:
-                  fm += line
-              text = f"---\n{fm}---\n" + text[m.end():]
-              open(path, "w", encoding="utf-8").write(text)
-          PY
-            fi
-          done
-      - name: Mirror the other user-facing docs/**/*.md into the site repository
+          SOURCE: ${{ github.repository }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: python3 infra/tools/sync-docs/sync_docs.py copy
+      - name: Mirror the user-facing docs into the site repository
         env:
           PROJECT: ${{ github.event.repository.name }}
           DOCS_DIR: ${{ inputs.docs-dir }}
           SITE_REPOSITORY: ${{ inputs.site-repository }}
           SITE_BRANCH: ${{ inputs.site-branch }}
+          LOCALES: ${{ inputs.locales }}
           EXTRA_EXCLUDES: ${{ inputs.extra-excludes }}
-          LOCALES: ${{ inputs.locales }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
           SOURCE: ${{ github.repository }}
           SOURCE_SHA: ${{ github.sha }}
-          REF_NAME: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          dest="site/content/docs/${PROJECT}"
-          mkdir -p "$dest"
-          # Only user-facing docs are published. Internal pages stay in the source repository and
-          # are left out here: research, QA audits, design notes and ADRs, proposals, plans and
-          # to-do, done and roadmap notes, agent instructions, maintainer runbooks and asset notes,
-          # plus the caller's extra-excludes. The patterns carry no leading / so they match at any
-          # depth; --delete-excluded removes any copy already on the site.
-          # Names are matched case-insensitively (plan.md, PLAN.md and Plan.md are all left out):
-          # ci_glob turns each letter into a [xX] bracket, which rsync globs understand.
-          ci_glob() {
-            local s="$1" out="" c i
-            for ((i = 0; i < ${#s}; i++)); do
-              c="${s:i:1}"
-              case "$c" in
-                [A-Za-z]) out+="[$(printf '%s' "$c" | tr '[:upper:]' '[:lower:]')$(printf '%s' "$c" | tr '[:lower:]' '[:upper:]')]" ;;
-                *) out+="$c" ;;
-              esac
-            done
-            printf '%s' "$out"
-          }
-          internal=()
-          for pattern in \
-            'research/' 'research*.md' 'qa/' '*audit*.md' \
-            'design/' 'brand/' 'assets/' 'adr/' 'notes/' 'proposals/' '*proposal*.md' \
-            'plan*.md' 'todo*.md' 'next*.md' 'done*.md' 'roadmap*.md' 'ideas.md' 'notes.md' \
-            'readme.md' 'claude.md' 'agency.md' \
-            'sonarcloud-setup.md' 'release.md' 'release-*.md'
-          do
-            internal+=("--exclude=$(ci_glob "$pattern")")
-          done
-          # AGENTS.md (agent instructions) only in this exact spelling: a user-facing agents.md is a
-          # different page (rtok documents agent integrations there).
-          internal+=(--exclude='AGENTS.md')
-          while read -r pattern; do
-            if [ -n "$pattern" ]; then internal+=("--exclude=$pattern"); fi
-          done <<< "$EXTRA_EXCLUDES"
-          # The locale folders are not part of the English mirror: excluded on the sending side
-          # and protected (P) on the receiving side, so --delete never touches them; each locale
-          # is mirrored by its own rsync below.
-          locale_filter=()
-          for lang in $LOCALES; do
-            locale_filter+=("--filter=P /$lang/" "--exclude=/$lang/")
-          done
-          rsync -a --delete --delete-excluded --prune-empty-dirs \
-            ${locale_filter[@]+"${locale_filter[@]}"} \
-            --exclude='/site.md' \
-            "${internal[@]}" \
-            --include='*/' --include='*.md' --exclude='*' \
-            "source/$DOCS_DIR/" "$dest/"
-          # Translations: <docs-dir>/<lang>/**/*.md -> content/docs/<name>/<lang>/, with English
-          # file names; <docs-dir>/<lang>/site.md is a card (previous step), never a page.
-          for lang in $LOCALES; do
-            if [ -d "source/$DOCS_DIR/$lang" ]; then
-              mkdir -p "$dest/$lang"
-              rsync -a --delete --delete-excluded --prune-empty-dirs \
-                --exclude='/site.md' \
-                "${internal[@]}" \
-                --include='*/' --include='*.md' --exclude='*' \
-                "source/$DOCS_DIR/$lang/" "$dest/$lang/"
-            else
-              rm -rf "${dest:?}/$lang"
-            fi
-          done
-          printf '{\n  "repo": "%s",\n  "sha": "%s",\n  "ref": "%s"\n}\n' \
-            "$SOURCE" "$SOURCE_SHA" "$REF_NAME" > "$dest/_source.json"
+        run: python3 infra/tools/sync-docs/sync_docs.py mirror
       - name: Commit and push if changed
-        working-directory: site
         env:
           PROJECT: ${{ github.event.repository.name }}
           DOCS_DIR: ${{ inputs.docs-dir }}
           SITE_REPOSITORY: ${{ inputs.site-repository }}
           SITE_BRANCH: ${{ inputs.site-branch }}
+          LOCALES: ${{ inputs.locales }}
+          EXTRA_EXCLUDES: ${{ inputs.extra-excludes }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
           SOURCE: ${{ github.repository }}
           SOURCE_SHA: ${{ github.sha }}
-          REF_NAME: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          # The checkout is fresh, so content/projects/ holds only this run's card changes; -A also
-          # stages a localized card the copy step removed.
-          git add -A -- content/projects "content/docs/${PROJECT}"
-          # _source.json alone changes on every run; only commit when content changed.
-          if git diff --cached --quiet -- . ":(exclude)content/docs/${PROJECT}/_source.json"; then
-            echo "content/projects/${PROJECT}.md and content/docs/${PROJECT}/ are already up to date"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "content: sync ${PROJECT} from ${SOURCE}@${SOURCE_SHA:0:7} (${REF_NAME})"
-          for attempt in 1 2 3 4 5; do
-            if git push origin "HEAD:$SITE_BRANCH"; then
-              echo "pushed $(git rev-parse HEAD) to $SITE_REPOSITORY $SITE_BRANCH"
-              exit 0
-            fi
-            echo "push rejected (attempt ${attempt}); rebasing onto the latest $SITE_BRANCH"
-            sleep $((attempt * 3))
-            git fetch origin "$SITE_BRANCH"
-            git rebase "origin/$SITE_BRANCH"
-          done
-          echo "::error::could not push to $SITE_REPOSITORY $SITE_BRANCH after 5 attempts"
-          exit 1
+        run: python3 infra/tools/sync-docs/sync_docs.py push

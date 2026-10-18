@@ -219,6 +219,14 @@
     },
     {
       "file": ".github/workflows/sync-docs.yml",
+      "rule": "artipacked",
+      "fingerprint": "a0c8684784fc3159",
+      "context": "9d2776858fca0e5a",
+      "occurrence": 0,
+      "message": "actions/checkout leaves the GITHUB_TOKEN in the git config of the workspace, where a later step such as an artifact upload can publish it. set \"persist-credentials: false\" under \"with:\" unless a later step needs to push"
+    },
+    {
+      "file": ".github/workflows/sync-docs.yml",
       "rule": "checkout-static-credentials",
       "fingerprint": "78fe43d76287c71d",
       "context": "0b8d84bacb20b263",
