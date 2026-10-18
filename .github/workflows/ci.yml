@@ -256,6 +256,14 @@ jobs:
           && fromJSON(needs.config.outputs.json).cancel-run-on-failure
         uses: $/.github/actions/cancel-run # nosemgrep: github-actions-mutable-action-tag
 
+  # Callers reference pyrlyn/ci as `@main`, never a SHA or a tag (AGENTS.md).
+  no-pinned-ci:
+    needs: config
+    if: needs.config.outputs.draft-skip != 'true'
+    uses: $/.github/workflows/no-pinned-ci.yml
+    permissions:
+      contents: read
+
   # Repository-specific jobs from the config's `jobs:` list, one matrix entry each.
   custom:
     needs: config
@@ -325,7 +333,7 @@ jobs:
 
   gate:
     needs:
-      [config, rust, dotnet, codeql, semgrep, snyk, sonarcloud, lint, license, commits, custom]
+      [config, rust, dotnet, codeql, semgrep, snyk, sonarcloud, lint, license, commits, no-pinned-ci, custom]
     # always(): also runs (and fails) after a cancel-run, so a required `ci / gate` is never
     # `skipped` (which counts as passed). Skipped on a draft PR when skip-drafts is on, like
     # pipeline.yml, so a draft never shows a green gate. A failed `config` fails the gate.
@@ -347,7 +355,7 @@ jobs:
   # always(): it must also run after cancel-run has cancelled the rest of the run.
   main-failure:
     needs:
-      [config, rust, dotnet, codeql, semgrep, snyk, sonarcloud, lint, license, commits, custom, gate]
+      [config, rust, dotnet, codeql, semgrep, snyk, sonarcloud, lint, license, commits, no-pinned-ci, custom, gate]
     if: >-
       always() && inputs.notify-main-failure && inputs.main-failure-maintainer != ''
       && github.ref == 'refs/heads/main'
