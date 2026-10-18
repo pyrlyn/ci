@@ -17,7 +17,7 @@ name: testflight
 #       permissions:
 #         contents: read
 #         actions: write # cancel-run
-#       uses: pyrlyn/ci/.github/workflows/testflight.yml@<sha>
+#       uses: pyrlyn/ci/.github/workflows/testflight.yml@main
 #       with:
 #         ipa: build/Mailune.ipa
 #       secrets: inherit

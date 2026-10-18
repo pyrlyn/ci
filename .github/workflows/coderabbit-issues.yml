@@ -22,7 +22,7 @@ name: coderabbit-issues
 #       permissions:
 #         issues: write
 #         pull-requests: read
-#       uses: pyrlyn/ci/.github/workflows/coderabbit-issues.yml@<sha>
+#       uses: pyrlyn/ci/.github/workflows/coderabbit-issues.yml@main
 #
 # Caller job permissions: issues: write, pull-requests: read.
 on:

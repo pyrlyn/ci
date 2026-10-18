@@ -360,6 +360,47 @@ jobs:
           # This repository has no .NET project.
           [ "$DOTNET_PRESENT" = false ]
 
+  # macos-runner: unset keeps the hosted labels, a value rewrites only the macOS entries.
+  macos-runner:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    name: macos-runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: unset
+        uses: ./.github/actions/macos-runner
+        with:
+          value: '[{"os":"ubuntu-latest"},{"os":"xcode-27"},{"os":"macos-26"}]'
+      - id: hosted
+        uses: ./.github/actions/macos-runner
+        with:
+          runner: Hosted
+          value: '[{"os":"ubuntu-latest"},{"os":"xcode-27"},{"os":"macos-26"}]'
+      - id: local
+        uses: ./.github/actions/macos-runner
+        with:
+          runner: xcode-27-local
+          value: '[{"os":"ubuntu-latest"},{"os":"xcode-27"},{"os":"macos-26"}]'
+      - id: labels
+        uses: ./.github/actions/macos-runner
+        with:
+          runner: xcode-27-local
+          value: '["ubuntu-latest","xcode-27","windows-latest"]'
+      - env:
+          UNSET: ${{ steps.unset.outputs.value }}
+          HOSTED: ${{ steps.hosted.outputs.value }}
+          LOCAL: ${{ steps.local.outputs.value }}
+          LABELS: ${{ steps.labels.outputs.value }}
+        run: |
+          set -euo pipefail
+          [ "$UNSET" = '[{"os":"ubuntu-latest"},{"os":"xcode-27"},{"os":"macos-26"}]' ]
+          [ "$HOSTED" = "$UNSET" ]
+          [ "$LOCAL" = '[{"os":"ubuntu-latest"},{"os":"xcode-27-local"},{"os":"xcode-27-local"}]' ]
+          [ "$LABELS" = '["ubuntu-latest","xcode-27-local","windows-latest"]' ]
+
   # The daily failure digest, the shared issue script, the main-failure issue script and the
   # release notifier's main-branch check, offline against a fake gh.
   failure-digest:

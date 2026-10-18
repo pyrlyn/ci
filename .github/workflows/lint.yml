@@ -95,6 +95,8 @@ jobs:
         env:
           VERSION: ${{ inputs.jactionlint-version || '2.0.2' }}
           ARGS: ${{ inputs.args }}
+        # `--ignore` allows the org's own `pyrlyn/ci/...@main` references (unpinned-uses): callers
+        # always float on main (AGENTS.md); every other action stays pinned.
         # No files: jactionlint finds the workflows, actions and dependabot.yml itself. Files
         # a tool generated (cargo-dist's release.yml) get only the correctness and security
         # rules (`generated-files: skip-policy`, the default); the caller's
@@ -103,7 +105,7 @@ jobs:
           set -euo pipefail
           # ARGS is split on whitespace on purpose.
           # shellcheck disable=SC2086
-          mise exec "github:jdx/jactionlint@$VERSION" -- jactionlint --color $ARGS
+          mise exec "github:jdx/jactionlint@$VERSION" -- jactionlint --color --ignore='pyrlyn/ci/[^ ]*@main' $ARGS
       - name: Extra lint
         if: inputs.extra-command != ''
         env:

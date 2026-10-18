@@ -252,7 +252,20 @@ jobs:
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
       prerelease: ${{ steps.tag.outputs.prerelease }}
+      verify-os: ${{ steps.verify-os.outputs.value }}
+      build-matrix: ${{ steps.build-matrix.outputs.value }}
     steps:
+      # MACOS_RUNNER (org or repo variable) moves the macOS entries to that runner; see macos-runner.
+      - id: verify-os
+        uses: $/.github/actions/macos-runner # nosemgrep: github-actions-mutable-action-tag
+        with:
+          runner: ${{ vars.MACOS_RUNNER }}
+          value: ${{ inputs.verify-os }}
+      - id: build-matrix
+        uses: $/.github/actions/macos-runner # nosemgrep: github-actions-mutable-action-tag
+        with:
+          runner: ${{ vars.MACOS_RUNNER }}
+          value: ${{ inputs.build-matrix }}
       - name: Tag
         id: tag
         env:
@@ -335,7 +348,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: ${{ fromJSON(inputs.verify-os) }}
+        os: ${{ fromJSON(needs.checks.outputs.verify-os) }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -375,7 +388,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        include: ${{ fromJSON(inputs.build-matrix) }}
+        include: ${{ fromJSON(needs.checks.outputs.build-matrix) }}
     runs-on: ${{ matrix.os }}
     env:
       TARGET: ${{ matrix.target }}

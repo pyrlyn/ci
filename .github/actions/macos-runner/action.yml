@@ -1,0 +1,45 @@
+name: macos-runner
+description: >-
+  The one place that decides which runner the macOS jobs use. Rewrites every macOS entry
+  (label `macos-*` or `xcode-*`) of a JSON runner list or matrix to the `runner` input when it
+  is set (the `MACOS_RUNNER` variable) and leaves it untouched when it is empty, so unset keeps
+  the hosted default and `xcode-27-local` selects the dedicated self-hosted Mac.
+# A composite action cannot read the `vars` context, so the calling workflow passes the
+# MACOS_RUNNER variable in `runner`; that is the only thing a caller writes. Never reimplement
+# the rewrite in a repository. `runs-on` cannot call an action, so a job resolves its runner in
+# a preceding ubuntu job and reads this action's output.
+inputs:
+  runner:
+    description: Runner label for macOS jobs (the MACOS_RUNNER variable). Empty or `hosted` keeps every entry.
+    required: false
+    default: ""
+  value:
+    description: >-
+      JSON to rewrite: an array of labels (["ubuntu-latest","xcode-27"]) or an array of objects.
+    required: true
+  key:
+    description: Object key holding the runner label (os, runs-on); ignored for label arrays.
+    required: false
+    default: os
+outputs:
+  value:
+    description: The rewritten JSON (compact).
+    value: ${{ steps.resolve.outputs.value }}
+runs:
+  using: composite
+  steps:
+    - id: resolve
+      shell: bash
+      env:
+        RUNNER: ${{ inputs.runner }}
+        VALUE: ${{ inputs.value }}
+        KEY: ${{ inputs.key }}
+      run: |
+        set -euo pipefail
+        out=$(jq -c --arg r "$RUNNER" --arg k "$KEY" '
+          def mac: type == "string" and test("^(macos|xcode)");
+          def swap: if ($r | ascii_downcase) != "hosted" and $r != "" and mac then $r else . end;
+          map(if type == "object" then (if has($k) then .[$k] |= swap else . end) else swap end)
+        ' <<<"$VALUE")
+        echo "value=$out" >> "$GITHUB_OUTPUT"
+        if [ -n "$RUNNER" ] && [ "${RUNNER,,}" != hosted ]; then echo "::notice title=macos-runner::macOS jobs run on $RUNNER"; fi

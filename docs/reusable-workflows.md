@@ -115,6 +115,7 @@ Composite actions (reference them as `pyrlyn/ci/.github/actions/<name>@<sha>`):
 | `gate` | fail unless every job in a `needs` JSON succeeded (`skip-ok` lists allowed skips) |
 | `revert-on-failure` | revert a failed push, push the revert, open a draft re-apply PR |
 | `macos-sign` | Developer ID codesign (or identity discovery for cargo-dist) + notarization |
+| `macos-runner` | the one definition of the `MACOS_RUNNER` switch: macOS runner labels of a JSON list/matrix -> the variable's value (hosted default when unset) |
 | `macos-keychain` | import the Developer ID identity into a job keychain kept for later steps (the release builds' one signing setup) |
 | `setup-xcode` | select the pinned Xcode (default 27) with `xcode-select`; fails when it is missing |
 | `cancel-run` | cancel the current workflow run (last step, `if: failure()`); `actions: write` |
@@ -1437,6 +1438,35 @@ jobs:
 
 jactionlint knows the `xcode-27` labels, so a caller that lints with `lint.yml` needs no
 `self-hosted-runner.labels` entry for them.
+
+## Org-wide macOS runner switch (`MACOS_RUNNER`)
+
+The Actions variable `MACOS_RUNNER` (org level reaches every repo; a repo variable overrides it
+for one repo) picks the runner of every macOS job in the shared workflows. Unset, empty or `hosted`
+(case-insensitive; an org variable cannot be empty, so the org value is `hosted`) keeps
+each job's own hosted label (`xcode-27`, `macos-26`); `xcode-27-local` selects the dedicated self-hosted Mac (labels
+`self-hosted, macOS, ARM64, xcode-27-local`, runner name `dedicated`). The rewrite is defined
+once, in the composite action
+[`macos-runner`](../.github/actions/macos-runner/action.yml): it turns every `macos-*` / `xcode-*`
+entry of a JSON label list or matrix into the variable's value. `ci-rust.yml` (its `plan`
+matrix), `ci.yml` (custom `jobs:` entries, by `runs-on`) and `release.yml` (`verify-os`,
+`build-matrix`) call it; `runs-on` cannot call an action, so each resolves the runner in an
+ubuntu job first. A composite action cannot read `vars`, so the caller passes
+`runner: ${{ vars.MACOS_RUNNER }}`, and that is all a caller writes. Repositories never
+reimplement the switch: a repo with its own macOS job resolves its label with this action
+(`pyrlyn/ci/.github/actions/macos-runner@main`) instead of an inline `vars.MACOS_RUNNER || ...`
+expression. `setup-xcode` uses `/Applications/Xcode.app` through `DEVELOPER_DIR` on a
+self-hosted runner and fails when its version differs. `MACOS_CI_DISABLED` still wins: the
+disabled entries run as no-ops on ubuntu whatever `MACOS_RUNNER` says.
+
+```sh
+gh api -X POST   orgs/pyrlyn/actions/variables -f name=MACOS_RUNNER -f value=xcode-27-local -f visibility=all
+gh api -X PATCH  orgs/pyrlyn/actions/variables/MACOS_RUNNER -f value=hosted   # back to hosted, keeps the variable
+gh api -X DELETE orgs/pyrlyn/actions/variables/MACOS_RUNNER   # back to hosted
+```
+
+Security: a self-hosted runner executes pull request code. Set the variable only where the repo
+is private or accepts no fork pull requests.
 
 ## Org-wide macOS CI switch (`MACOS_CI_DISABLED`)
 
