@@ -33,6 +33,10 @@ runs:
         SCRIPT: ${{ github.action_path }}/../../../tools/snapshots/snapshot_version.py
       run: |
         set -euo pipefail
+        if [[ -n "$PREFIX" && ! "$PREFIX" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+          echo "::error::env-prefix must be a plain variable-name prefix" >&2
+          exit 1
+        fi
         if [ -n "$OVERRIDE" ]; then export SNAPSHOT_VERSION="$OVERRIDE"; fi
         python3 "$SCRIPT" --prefix "$PREFIX" probe
         key="$(python3 "$SCRIPT" --prefix "$PREFIX" key)"

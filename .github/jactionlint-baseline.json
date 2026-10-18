@@ -18,6 +18,14 @@
       "message": "untrusted input from the variable BUCKET (inputs.bucket) is written to $GITHUB_ENV. an attacker who controls the value can set LD_PRELOAD or NODE_OPTIONS (a newline adds another variable) and run code in the next steps. do not write input that an outsider controls to $GITHUB_ENV; validate it first or pass it to the next step with $GITHUB_OUTPUT"
     },
     {
+      "file": ".github/actions/snapshot-version/action.yml",
+      "rule": "github-env",
+      "fingerprint": "5fb4c31652aac7b6",
+      "context": "fa3dd49ac8c63543",
+      "occurrence": 0,
+      "message": "untrusted input from the variable PREFIX (inputs.env-prefix) is written to $GITHUB_ENV. an attacker who controls the value can set LD_PRELOAD or NODE_OPTIONS (a newline adds another variable) and run code in the next steps. do not write input that an outsider controls to $GITHUB_ENV; validate it first or pass it to the next step with $GITHUB_OUTPUT"
+    },
+    {
       "file": ".github/workflows/build-cli.yml",
       "rule": "missing-timeout",
       "fingerprint": "9c11787ba90227ec",
