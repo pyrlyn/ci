@@ -1437,3 +1437,16 @@ jobs:
 
 jactionlint knows the `xcode-27` labels, so a caller that lints with `lint.yml` needs no
 `self-hosted-runner.labels` entry for them.
+
+## Org-wide macOS CI switch (`MACOS_CI_DISABLED`)
+
+The org Actions variable `MACOS_CI_DISABLED` set to `true` turns macOS/iOS pull request CI off in
+every repo at once; deleting it (or setting anything else) turns it back on. `ci-rust.yml` keeps
+every macOS matrix entry (`macos-*`, `xcode-27*`) under its usual check name but runs it as a
+no-op on `skip-runs-on`, so required checks still report success. Inline macOS jobs in the
+callers carry `if: vars.MACOS_CI_DISABLED != 'true'`. Release workflows are not affected.
+
+```sh
+gh api -X POST   orgs/pyrlyn/actions/variables -f name=MACOS_CI_DISABLED -f value=true -f visibility=all
+gh api -X DELETE orgs/pyrlyn/actions/variables/MACOS_CI_DISABLED   # re-enable
+```

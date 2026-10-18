@@ -273,9 +273,13 @@ jobs:
       fail-fast: false
       matrix:
         include: ${{ fromJSON(needs.config.outputs.jobs) }}
-    runs-on: ${{ matrix.runs-on }}
+    # Org variable MACOS_CI_DISABLED=true: macOS entries keep their check name but run as
+    # no-ops on ubuntu (MACOS_OFF makes every step below skip).
+    runs-on: ${{ vars.MACOS_CI_DISABLED == 'true' && (startsWith(matrix.runs-on, 'macos') || startsWith(matrix.runs-on, 'xcode')) && 'ubuntu-latest' || matrix.runs-on }}
     timeout-minutes: ${{ matrix.timeout-minutes }}
     continue-on-error: ${{ matrix.allow-failure }}
+    env:
+      MACOS_OFF: ${{ vars.MACOS_CI_DISABLED == 'true' && (startsWith(matrix.runs-on, 'macos') || startsWith(matrix.runs-on, 'xcode')) }}
     defaults:
       run:
         shell: bash
@@ -289,38 +293,38 @@ jobs:
         env:
           JOB_ENV: ${{ matrix.env }}
         run: jq -r 'to_entries[] | "\(.key)=\(.value)"' <<<"$JOB_ENV" >> "$GITHUB_ENV"
-      - if: matrix.mise == 'true'
+      - if: matrix.mise == 'true' && env.MACOS_OFF != 'true'
         uses: jdx/mise-action@9149ea85001c7435d5a66bb127d6a1b6227cb0a5 # v5.0.0
         with:
           install_args: ${{ matrix.mise-install-args }}
       - name: rustc is the mise.toml pin
-        if: matrix.rust-pin
+        if: matrix.rust-pin && env.MACOS_OFF != 'true'
         run: |
           set -euo pipefail
           version="$(mise current rust)"
           echo "RUSTUP_TOOLCHAIN=$version" >> "$GITHUB_ENV"
           rustc --version | grep -q "^rustc $version " \
             || { echo "::error::rustc is not the mise.toml pin $version"; exit 1; }
-      - if: matrix.rust-cache
+      - if: matrix.rust-cache && env.MACOS_OFF != 'true'
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           key: ${{ matrix.name }}
-      - if: matrix.tools != ''
+      - if: matrix.tools != '' && env.MACOS_OFF != 'true'
         uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
         with:
           tool: ${{ matrix.tools }}
       - name: Setup
-        if: matrix.setup != ''
+        if: matrix.setup != '' && env.MACOS_OFF != 'true'
         env:
           SETUP: ${{ matrix.setup }}
         run: bash -euo pipefail -c "$SETUP"
       - name: Run
-        if: matrix.shell == 'bash'
+        if: matrix.shell == 'bash' && env.MACOS_OFF != 'true'
         env:
           RUN: ${{ matrix.run }}
         run: bash -euo pipefail -c "$RUN"
       - name: Run (pwsh)
-        if: matrix.shell == 'pwsh'
+        if: matrix.shell == 'pwsh' && env.MACOS_OFF != 'true'
         shell: pwsh
         env:
           RUN: ${{ matrix.run }}
