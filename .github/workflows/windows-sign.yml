@@ -14,7 +14,7 @@ name: windows-sign
 #       permissions:
 #         contents: read
 #         actions: write # cancel-run
-#       uses: pyrlyn/ci/.github/workflows/windows-sign.yml@<sha>
+#       uses: pyrlyn/ci/.github/workflows/windows-sign.yml@main
 #       with:
 #         layout: desktop/windows/layout
 #         output: Mailune.msix

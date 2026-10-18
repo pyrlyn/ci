@@ -38,7 +38,7 @@ grep -q "checkout@$old # v7" "$root/.github/workflows/ci.yml"
 grep -q "setup-rust@$new # main" "$root/.github/actions/x/action.yml"
 grep -q "ci.yml@$old # main" "$root/.github/workflows/release.yml"
 grep -q "@$old" "$root/src/notes.yml"
-grep -q "dependabot-automerge.yml@$new # main" "$root/.github/workflows/dependabot.yml"
+grep -q "dependabot-automerge.yml@main" "$root/.github/workflows/dependabot.yml"
 grep -q 'wait-workflow: ci.yml' "$root/.github/workflows/dependabot.yml"
 grep -q 'number }}' "$root/.github/workflows/dependabot.yml"
 if grep -v '\${{' "$root/.github/workflows/dependabot.yml" | grep -q '{{'; then

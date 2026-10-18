@@ -14,7 +14,7 @@ name: play
 #       permissions:
 #         contents: read
 #         actions: write # cancel-run
-#       uses: pyrlyn/ci/.github/workflows/play.yml@<sha>
+#       uses: pyrlyn/ci/.github/workflows/play.yml@main
 #       with:
 #         aab: app/build/outputs/bundle/release/app-release.aab
 #         package-name: app.mailune
