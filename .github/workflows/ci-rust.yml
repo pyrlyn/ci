@@ -362,12 +362,20 @@ jobs:
           MATRIX: ${{ steps.m.outputs.matrix }}
           RUN: ${{ steps.scope.outputs.run }}
           SKIP_RUNS_ON: ${{ inputs.skip-runs-on }}
+          MACOS_DISABLED: ${{ vars.MACOS_CI_DISABLED }}
         run: |
           set -euo pipefail
           m="$MATRIX"
           if [ "$RUN" != true ] && [ -n "$SKIP_RUNS_ON" ]; then
             m=$(jq -c --arg os "$SKIP_RUNS_ON" 'map(.os = $os)' <<<"$m")
             echo "::notice title=ci-rust::no work; every matrix entry runs on $SKIP_RUNS_ON"
+          fi
+          # Org variable MACOS_CI_DISABLED=true: every macOS entry (macos-*, xcode-27*) keeps its
+          # check name but runs as a no-op on ubuntu (`disabled` makes its steps no-ops).
+          if [ "$MACOS_DISABLED" = true ]; then
+            m=$(jq -c --arg os "${SKIP_RUNS_ON:-ubuntu-latest}" \
+              'map(if (.os | test("^(macos|xcode)")) then .os = $os | .disabled = true else . end)' <<<"$m")
+            echo "::notice title=ci-rust::MACOS_CI_DISABLED is true; macOS entries are no-ops"
           fi
           echo "matrix=$m" >> "$GITHUB_OUTPUT"
       - name: Cancel the run on failure
@@ -435,7 +443,7 @@ jobs:
     # check under the raw expression name. With RUN=false every step is a no-op instead.
     env:
       TARGET: ${{ matrix.target }}
-      RUN: ${{ needs.plan.outputs.run }}
+      RUN: ${{ matrix.disabled && 'false' || needs.plan.outputs.run }}
       PACKAGE_ARGS: ${{ needs.plan.outputs.package-args }}
       MISE_AUTO_INSTALL: ${{ inputs.mise-auto-install }}
     defaults:
