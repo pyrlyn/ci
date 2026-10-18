@@ -1442,8 +1442,9 @@ jactionlint knows the `xcode-27` labels, so a caller that lints with `lint.yml` 
 ## Org-wide macOS runner switch (`MACOS_RUNNER`)
 
 The Actions variable `MACOS_RUNNER` (org level reaches every repo; a repo variable overrides it
-for one repo) picks the runner of every macOS job in the shared workflows. Unset or empty keeps
-the hosted default (`xcode-27`); `xcode-27-local` selects the dedicated self-hosted Mac (labels
+for one repo) picks the runner of every macOS job in the shared workflows. Unset, empty or `hosted`
+(case-insensitive; an org variable cannot be empty, so the org value is `hosted`) keeps
+each job's own hosted label (`xcode-27`, `macos-26`); `xcode-27-local` selects the dedicated self-hosted Mac (labels
 `self-hosted, macOS, ARM64, xcode-27-local`, runner name `dedicated`). The rewrite is defined
 once, in the composite action
 [`macos-runner`](../.github/actions/macos-runner/action.yml): it turns every `macos-*` / `xcode-*`
@@ -1460,6 +1461,7 @@ disabled entries run as no-ops on ubuntu whatever `MACOS_RUNNER` says.
 
 ```sh
 gh api -X POST   orgs/pyrlyn/actions/variables -f name=MACOS_RUNNER -f value=xcode-27-local -f visibility=all
+gh api -X PATCH  orgs/pyrlyn/actions/variables/MACOS_RUNNER -f value=hosted   # back to hosted, keeps the variable
 gh api -X DELETE orgs/pyrlyn/actions/variables/MACOS_RUNNER   # back to hosted
 ```
 

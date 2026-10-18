@@ -374,6 +374,11 @@ jobs:
         uses: ./.github/actions/macos-runner
         with:
           value: '[{"os":"ubuntu-latest"},{"os":"xcode-27"},{"os":"macos-26"}]'
+      - id: hosted
+        uses: ./.github/actions/macos-runner
+        with:
+          runner: Hosted
+          value: '[{"os":"ubuntu-latest"},{"os":"xcode-27"},{"os":"macos-26"}]'
       - id: local
         uses: ./.github/actions/macos-runner
         with:
@@ -386,11 +391,13 @@ jobs:
           value: '["ubuntu-latest","xcode-27","windows-latest"]'
       - env:
           UNSET: ${{ steps.unset.outputs.value }}
+          HOSTED: ${{ steps.hosted.outputs.value }}
           LOCAL: ${{ steps.local.outputs.value }}
           LABELS: ${{ steps.labels.outputs.value }}
         run: |
           set -euo pipefail
           [ "$UNSET" = '[{"os":"ubuntu-latest"},{"os":"xcode-27"},{"os":"macos-26"}]' ]
+          [ "$HOSTED" = "$UNSET" ]
           [ "$LOCAL" = '[{"os":"ubuntu-latest"},{"os":"xcode-27-local"},{"os":"xcode-27-local"}]' ]
           [ "$LABELS" = '["ubuntu-latest","xcode-27-local","windows-latest"]' ]
 
