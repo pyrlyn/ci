@@ -59,6 +59,10 @@ runs:
         ENDPOINT: ${{ inputs.endpoint }}
         READ_ONLY: ${{ inputs.read-only }}
       run: |
+        # A newline in an input would add another variable to $GITHUB_ENV.
+        for v in "$ACCESS_KEY_ID" "$SECRET_ACCESS_KEY" "$BUCKET" "$ENDPOINT" "$READ_ONLY"; do
+          case "$v" in *$'\n'*|*$'\r'*) echo "::error::sccache input contains a newline" >&2; exit 1 ;; esac
+        done
         {
           echo "RUSTC_WRAPPER=sccache"
           echo "CARGO_INCREMENTAL=0"
