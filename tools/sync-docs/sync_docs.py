@@ -21,15 +21,25 @@ import sys
 import time
 from pathlib import Path
 
+def ci_glob(pattern: str) -> str:
+    """Case-insensitive glob: every letter becomes a [xX] bracket (plan.md, PLAN.md, Plan.md)."""
+    return "".join(f"[{c.lower()}{c.upper()}]" if c.isalpha() else c for c in pattern)
+
+
+# Service pages stay in the source repository; names match case-insensitively.
+# AGENTS.md (agent instructions) only in this exact spelling: a user-facing agents.md is a
+# different page (rtok documents agent integrations there).
 INTERNAL = [
-    "research/", "research*.md", "qa/", "*audit*.md",
-    "design/", "brand/", "assets/", "adr/", "notes/",
-    "proposals/", "*proposal*.md",
-    "plan*.md", "PLAN*.md", "todo*.md", "TODO*.md",
-    "next*.md", "done*.md", "roadmap*.md", "ideas.md",
-    "AGENTS.md", "CLAUDE.md", "agency.md",
-    "sonarcloud-setup.md", "release.md", "release-*.md",
-]
+    ci_glob(p)
+    for p in (
+        "research/", "research*.md", "qa/", "*audit*.md",
+        "design/", "brand/", "assets/", "adr/", "notes/",
+        "proposals/", "*proposal*.md",
+        "plan*.md", "todo*.md", "next*.md", "done*.md", "roadmap*.md", "ideas.md", "notes.md",
+        "readme.md", "claude.md", "agency.md",
+        "sonarcloud-setup.md", "release.md", "release-*.md",
+    )
+] + ["AGENTS.md"]
 
 
 def env(name: str, default: str = "") -> str:

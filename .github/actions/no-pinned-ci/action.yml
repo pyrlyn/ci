@@ -1,0 +1,11 @@
+name: no-pinned-ci
+description: >-
+  Fail when a YAML file changed by the pull request has `uses: pyrlyn/ci/...@<anything but
+  main>` (a SHA or a tag). Needs a checkout with full history (fetch-depth: 0).
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        BASE_REF: ${{ github.event_name == 'pull_request' && github.base_ref || '' }}
+      run: python3 "$GITHUB_ACTION_PATH/no_pinned_ci.py"

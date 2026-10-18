@@ -1,0 +1,23 @@
+name: no-pinned-ci
+
+# Reusable check: a pull request must not pin pyrlyn/ci in a caller (`uses:
+# pyrlyn/ci/...@<sha or tag>`); the reference is always `@main`. ci.yml runs it for every
+# repository that uses the shared CI, so each pull request gets it without a caller change.
+# Outside a pull request the script has no range and succeeds with a notice.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  no-pinned-ci:
+    name: no-pinned-ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: $/.github/actions/no-pinned-ci # nosemgrep: github-actions-mutable-action-tag

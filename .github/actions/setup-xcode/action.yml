@@ -26,9 +26,25 @@ outputs:
 runs:
   using: composite
   steps:
+    # A self-hosted Mac (MACOS_RUNNER=xcode-27-local) has one Xcode, /Applications/Xcode.app, no
+    # sudo and no Xcode_<version>.app images: use it through DEVELOPER_DIR and check its version.
+    - name: Use the self-hosted Xcode ${{ inputs.version }}
+      if: runner.os == 'macOS' && runner.environment == 'self-hosted' && inputs.version != ''
+      shell: bash
+      env:
+        XCODE_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        dev=/Applications/Xcode.app/Contents/Developer
+        got="$(DEVELOPER_DIR=$dev xcodebuild -version | sed -n 's/^Xcode //p' | head -n1)"
+        case "$got" in "$XCODE_VERSION" | "$XCODE_VERSION".*) ;; *)
+          echo "::error title=setup-xcode::self-hosted Xcode is $got, need $XCODE_VERSION"; exit 1 ;;
+        esac
+        echo "DEVELOPER_DIR=$dev" >> "$GITHUB_ENV"
+        echo "Using self-hosted Xcode $got"
     - name: Select Xcode ${{ inputs.version }}
       id: select
-      if: runner.os == 'macOS' && inputs.version != ''
+      if: runner.os == 'macOS' && runner.environment != 'self-hosted' && inputs.version != ''
       shell: bash
       env:
         XCODE_VERSION: ${{ inputs.version }}

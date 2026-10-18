@@ -17,6 +17,11 @@ class Mirror(unittest.TestCase):
             got = sorted(p.relative_to(dest).as_posix() for p in dest.rglob("*") if p.is_file())
             self.assertEqual(got, ["a.md", "guide/b.md", "ru/keep.md"])
 
+    def test_internal_names_case_insensitive(self):
+        for name in ["PLAN.md", "Plan.md", "README.md", "TODO-2.md", "AGENTS.md"]:
+            self.assertTrue(sd.excluded(name, False, sd.INTERNAL), name)
+        self.assertFalse(sd.excluded("agents.md", False, sd.INTERNAL))
+
     def test_version(self):
         with tempfile.TemporaryDirectory() as t:
             p = Path(t) / "site.md"; p.write_text('---\ntitle: x\nversion: "0.1"\n---\nbody\n')
