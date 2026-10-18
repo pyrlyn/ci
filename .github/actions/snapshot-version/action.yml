@@ -1,0 +1,44 @@
+name: snapshot-version
+description: >-
+  Probe the runner's Xcode / macOS, print them, write the version key to the job summary and
+  export it as `<env-prefix>_SNAPSHOT_VERSION` for the test steps that follow. With `override`
+  set (for example `hosted-pending`) the key is that value instead of the detected one. Snapshot
+  tests read the variable and use `<tests>/Snapshots/<key>/`; a key without a directory is
+  skipped, never recorded. See tools/snapshots/snapshot_version.py.
+inputs:
+  override:
+    description: Key to use instead of the detected one. Empty uses the detected key.
+    required: false
+    default: ""
+  env-prefix:
+    description: Prefix of the exported variable, e.g. COX -> COX_SNAPSHOT_VERSION.
+    required: false
+    default: ""
+outputs:
+  key:
+    description: The active snapshot version key.
+    value: ${{ steps.probe.outputs.key }}
+  native-key:
+    description: The key the runner's real toolchain would produce.
+    value: ${{ steps.probe.outputs.native-key }}
+runs:
+  using: composite
+  steps:
+    - name: Probe snapshot toolchain
+      id: probe
+      shell: bash
+      env:
+        OVERRIDE: ${{ inputs.override }}
+        PREFIX: ${{ inputs.env-prefix }}
+        SCRIPT: ${{ github.action_path }}/../../../tools/snapshots/snapshot_version.py
+      run: |
+        set -euo pipefail
+        if [[ -n "$PREFIX" && ! "$PREFIX" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+          echo "::error::env-prefix must be a plain variable-name prefix" >&2
+          exit 1
+        fi
+        if [ -n "$OVERRIDE" ]; then export SNAPSHOT_VERSION="$OVERRIDE"; fi
+        python3 "$SCRIPT" --prefix "$PREFIX" probe
+        key="$(python3 "$SCRIPT" --prefix "$PREFIX" key)"
+        name="${PREFIX:+${PREFIX}_}SNAPSHOT_VERSION"
+        echo "$name=$key" >> "$GITHUB_ENV"
