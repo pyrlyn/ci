@@ -28,8 +28,8 @@
     {
       "file": ".github/workflows/bump.yml",
       "rule": "cache-poisoning",
-      "fingerprint": "43618d91bec7f8ac",
-      "context": "c494d17c178efb10",
+      "fingerprint": "4c53acc815837884",
+      "context": "48ee729b9c71e848",
       "occurrence": 0,
       "message": "jdx/mise-action restores a cache although the job runs \"gh release create\", so a poisoned cache entry can end up in the published artifacts. set \"cache: false\", or set \"cache-mode: none\" on the job"
     },
@@ -100,8 +100,8 @@
     {
       "file": ".github/workflows/release-apple-desktop.yml",
       "rule": "cache-poisoning",
-      "fingerprint": "767c5d667f182217",
-      "context": "4394320ca2fe5bb6",
+      "fingerprint": "c8a03e67890a8169",
+      "context": "5e4783da018d668b",
       "occurrence": 0,
       "message": "jdx/mise-action restores a cache although the job runs \"gh release create\", so a poisoned cache entry can end up in the published artifacts. set \"cache: false\", or set \"cache-mode: none\" on the job"
     },
@@ -156,8 +156,8 @@
     {
       "file": ".github/workflows/release.yml",
       "rule": "cache-poisoning",
-      "fingerprint": "e075f385bddcb609",
-      "context": "4394320ca2fe5bb6",
+      "fingerprint": "e756a685e4b6e683",
+      "context": "5e4783da018d668b",
       "occurrence": 0,
       "message": "jdx/mise-action restores a cache although the job runs \"gh release upload\", so a poisoned cache entry can end up in the published artifacts. set \"cache: false\", or set \"cache-mode: none\" on the job"
     },
