@@ -316,7 +316,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
-      matrix: ${{ steps.runners.outputs.matrix }}
+      matrix-linux: ${{ steps.runners.outputs.matrix-linux }}
+      matrix-other: ${{ steps.runners.outputs.matrix-other }}
+      has-linux: ${{ steps.runners.outputs.has-linux }}
+      has-other: ${{ steps.runners.outputs.has-other }}
       run: ${{ steps.scope.outputs.run }}
       package-args: ${{ steps.scope.outputs.package-args }}
     steps:
@@ -378,6 +381,15 @@ jobs:
             echo "::notice title=ci-rust::MACOS_CI_DISABLED is true; macOS entries are no-ops"
           fi
           echo "matrix=$m" >> "$GITHUB_OUTPUT"
+          # Linux entries run first; Windows, macOS and the rest wait for them (`rust-other`).
+          linux=$(jq -c 'map(select(.os | test("^(ubuntu|linux)")))' <<<"$m")
+          other=$(jq -c 'map(select(.os | test("^(ubuntu|linux)") | not))' <<<"$m")
+          {
+            echo "matrix-linux=$linux"
+            echo "matrix-other=$other"
+            echo "has-linux=$(jq '(length > 0)' <<<"$linux")"
+            echo "has-other=$(jq '(length > 0)' <<<"$other")"
+          } >> "$GITHUB_OUTPUT"
       - name: Cancel the run on failure
         if: failure() && inputs.cancel-run-on-failure
         uses: $/.github/actions/cancel-run # nosemgrep: github-actions-mutable-action-tag
@@ -433,10 +445,299 @@ jobs:
   rust:
     name: ${{ matrix.target }}
     needs: plan
+    # Linux entries (and every no-op entry) first; `rust-other` waits for them.
+    if: needs.plan.outputs.has-linux == 'true'
     strategy:
       fail-fast: true
       matrix:
-        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
+        include: ${{ fromJSON(needs.plan.outputs.matrix-linux) }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    # Never skipped at job level: that happens before the matrix expands and reports a single
+    # check under the raw expression name. With RUN=false every step is a no-op instead.
+    env:
+      TARGET: ${{ matrix.target }}
+      RUN: ${{ matrix.disabled && 'false' || needs.plan.outputs.run }}
+      PACKAGE_ARGS: ${{ needs.plan.outputs.package-args }}
+      MISE_AUTO_INSTALL: ${{ inputs.mise-auto-install }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - if: env.RUN == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The pyrlyn Xcode, before anything compiles (cc, linker and SDK come from it).
+      - name: Select Xcode ${{ inputs.xcode-version }}
+        if: env.RUN == 'true' && runner.os == 'macOS' && inputs.xcode-version != ''
+        uses: $/.github/actions/setup-xcode # nosemgrep: github-actions-mutable-action-tag
+        with:
+          version: ${{ inputs.xcode-version }}
+
+      # Default path: the Rust version pinned in the caller's mise.toml.
+      - if: env.RUN == 'true' && inputs.rust-version == ''
+        uses: jdx/mise-action@9149ea85001c7435d5a66bb127d6a1b6227cb0a5 # v5.0.0
+        with:
+          working_directory: ${{ inputs.working-directory }}
+          # sccache: true also installs mise's sccache. A caller's mise.toml [env] may set
+          # RUSTC_WRAPPER from `mise which sccache`; cargo runs through the mise shim, which
+          # re-applies that [env] over $GITHUB_ENV, so without the tool installed the wrapper
+          # resolves to empty and rustc bypasses sccache. Not on Windows (no wrapper there).
+          install_args: >-
+            ${{ inputs.mise-install-args }}
+            ${{ inputs.mold && runner.os == 'Linux' && 'mold' || '' }}
+            ${{ inputs.sccache && runner.os != 'Windows' && 'sccache' || '' }}
+
+      # mold links through clang. ubuntu-latest ships it; install it when a runner does not.
+      - if: env.RUN == 'true' && inputs.mold && runner.os == 'Linux' && inputs.rust-version == ''
+        name: clang for mold
+        run: |
+          set -euo pipefail
+          command -v clang >/dev/null || { sudo apt-get update -y && sudo apt-get install -y clang; }
+          clang --version | head -1
+          mold --version
+
+      # Make the pin the active toolchain for every later rustup/cargo call, add the
+      # target, and fail if rustc is anything else (e.g. the runner image's own stable).
+      # A target the runner cannot execute is a cross target: built, not tested.
+      - if: env.RUN == 'true'
+        name: Use the pinned Rust and add the target
+        env:
+          RUST_VERSION: ${{ inputs.rust-version }}
+          # toJSON keeps JSON false as the string "false". A bare ${{ matrix.test }} can
+          # arrive empty for boolean false, which would run the tests. A missing key is
+          # null. Quotes are stripped so a JSON string "false" is accepted too.
+          TEST: ${{ toJSON(matrix.test) }}
+          LOCKED: ${{ inputs.locked }}
+          CARGO_ARGS: ${{ inputs.clippy-args }}
+        run: |
+          set -euo pipefail
+          if [ -n "$RUST_VERSION" ]; then
+            version="$RUST_VERSION"
+            rustup toolchain install "$version" --profile minimal --component clippy
+          else
+            version="$(mise current rust)"
+            [ -n "$version" ] || { echo "mise.toml pins no rust version" >&2; exit 1; }
+          fi
+          echo "RUSTUP_TOOLCHAIN=$version" >> "$GITHUB_ENV"
+          export RUSTUP_TOOLCHAIN="$version"
+          # mise.toml may omit `components`; make sure clippy exists either way.
+          rustup component add clippy
+          rustup target add "$TARGET"
+          rustc --version
+          cargo --version
+          rustc --version | grep -q "^rustc $version " \
+            || { echo "rustc is not the pinned Rust $version" >&2; exit 1; }
+          host="$(rustc -vV | sed -n 's/^host: //p')"
+          test_flag=${TEST//'"'/}
+          if [ "$host" = "$TARGET" ]; then
+            echo "TARGET_ARGS=" >> "$GITHUB_ENV"
+            if [ "$test_flag" = "false" ]; then native=false; else native=true; fi
+          else
+            echo "TARGET_ARGS=--target $TARGET" >> "$GITHUB_ENV"
+            native=false
+          fi
+          echo "NATIVE=$native" >> "$GITHUB_ENV"
+          echo "host $host, target $TARGET, tests run: $native"
+          case "$LOCKED" in
+            true) locked=--locked ;;
+            false) locked="" ;;
+            auto)
+              manifest="$(cargo locate-project --workspace --message-format plain)"
+              locked=""
+              if [ -f "$(dirname "$manifest")/Cargo.lock" ]; then locked=--locked; fi
+              ;;
+            *) echo "::error::locked must be auto, true or false, got '$LOCKED'"; exit 1 ;;
+          esac
+          echo "LOCKED_ARGS=$locked" >> "$GITHUB_ENV"
+          # clippy-args that already pass --locked (the pre-`locked` way) get no second one:
+          # cargo rejects a repeated --locked.
+          case " $CARGO_ARGS " in
+            *" --locked "*) echo "CLIPPY_LOCKED_ARGS=" >> "$GITHUB_ENV" ;;
+            *) echo "CLIPPY_LOCKED_ARGS=$locked" >> "$GITHUB_ENV" ;;
+          esac
+          echo "locked: ${locked:-no}"
+
+      - if: env.RUN == 'true'
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: ${{ inputs.working-directory }} -> target
+          key: ${{ matrix.target }}
+          save-if: >-
+            ${{ inputs.cache-all-refs
+            || github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+
+      - if: env.RUN == 'true' && inputs.tools != ''
+        uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
+        with:
+          tool: ${{ inputs.tools }}
+
+      - name: sccache configuration
+        id: sccache
+        if: env.RUN == 'true' && inputs.sccache
+        env:
+          ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          BUCKET: ${{ inputs.sccache-bucket || vars.SCCACHE_BUCKET }}
+          ENDPOINT: ${{ inputs.sccache-endpoint || vars.SCCACHE_ENDPOINT }}
+        run: |
+          if [ -n "$ACCESS_KEY_ID" ] && [ -n "$SECRET_ACCESS_KEY" ] && [ -n "$BUCKET" ] \
+            && [ -n "$ENDPOINT" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            # mise.toml may export its own sccache as the wrapper; without a backend, drop it.
+            echo "RUSTC_WRAPPER=" >> "$GITHUB_ENV"
+            echo "::notice title=sccache::off: the R2 secrets or variables are not available"
+          fi
+
+      - if: env.RUN == 'true' && inputs.sccache && steps.sccache.outputs.enabled == 'true'
+        uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
+        with:
+          version: v0.18.0
+
+      - name: sccache environment
+        if: env.RUN == 'true' && inputs.sccache && steps.sccache.outputs.enabled == 'true'
+        env:
+          ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          BUCKET: ${{ inputs.sccache-bucket || vars.SCCACHE_BUCKET }}
+          ENDPOINT: ${{ inputs.sccache-endpoint || vars.SCCACHE_ENDPOINT }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          {
+            echo "RUSTC_WRAPPER=sccache"
+            echo "CARGO_INCREMENTAL=0"
+            echo "SCCACHE_BUCKET=$BUCKET"
+            echo "SCCACHE_ENDPOINT=$ENDPOINT"
+            echo "SCCACHE_REGION=auto"
+            echo "AWS_ACCESS_KEY_ID=$ACCESS_KEY_ID"
+            echo "AWS_SECRET_ACCESS_KEY=$SECRET_ACCESS_KEY"
+            if [ "$EVENT_NAME" = pull_request ]; then echo "SCCACHE_S3_RW_MODE=READ_ONLY"; fi
+          } >> "$GITHUB_ENV"
+
+      - name: Setup
+        if: env.RUN == 'true' && inputs.setup-command != ''
+        env:
+          SETUP_COMMAND: ${{ inputs.setup-command }}
+        run: eval "$SETUP_COMMAND"
+
+      - if: env.RUN == 'true'
+        name: clippy
+        env:
+          CARGO_ARGS: ${{ inputs.clippy-args }}
+          FEATURE_ARGS: ${{ inputs.feature-args }}
+        run: |
+          # CARGO_ARGS and TARGET_ARGS are split on whitespace on purpose.
+          # shellcheck disable=SC2086
+          cargo clippy $PACKAGE_ARGS --all-targets $FEATURE_ARGS $TARGET_ARGS $CARGO_ARGS \
+            $CLIPPY_LOCKED_ARGS -- -D warnings
+
+      - if: env.RUN == 'true'
+        name: check
+        env:
+          CARGO_ARGS: ${{ inputs.clippy-args }}
+          FEATURE_ARGS: ${{ inputs.feature-args }}
+        run: |
+          # CARGO_ARGS and TARGET_ARGS are split on whitespace on purpose.
+          # shellcheck disable=SC2086
+          cargo check $PACKAGE_ARGS --all-targets $FEATURE_ARGS $TARGET_ARGS $CARGO_ARGS \
+            $CLIPPY_LOCKED_ARGS
+
+      - name: nextest archive
+        if: >-
+          env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != ''
+          && inputs.nextest-archive
+        env:
+          ARCHIVE_ARGS: ${{ inputs.nextest-archive-args }}
+          FEATURE_ARGS: ${{ inputs.feature-args }}
+        run: |
+          set -euo pipefail
+          command -v cargo-nextest >/dev/null \
+            || { echo "::error::nextest-archive needs nextest in the tools input"; exit 1; }
+          archive="$RUNNER_TEMP/nextest-archive-$TARGET.tar.zst"
+          if [ -z "$ARCHIVE_ARGS" ]; then
+            ARCHIVE_ARGS="$PACKAGE_ARGS --all-targets $FEATURE_ARGS $LOCKED_ARGS"
+          fi
+          # ARCHIVE_ARGS and TARGET_ARGS are split on whitespace on purpose.
+          # shellcheck disable=SC2086
+          cargo nextest archive $ARCHIVE_ARGS $TARGET_ARGS --archive-file "$archive"
+          echo "NEXTEST_ARCHIVE=$archive" >> "$GITHUB_ENV"
+
+      - name: nextest archive artifact
+        if: >-
+          env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != ''
+          && inputs.nextest-archive
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nextest-archive-${{ matrix.target }}
+          path: ${{ env.NEXTEST_ARCHIVE }}
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: test
+        if: env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != ''
+        env:
+          FEATURE_ARGS: ${{ inputs.feature-args }}
+          TEST_COMMAND: ${{ inputs.test-command }}
+        run: eval "$TEST_COMMAND"
+
+      - name: doctests
+        if: env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != '' && inputs.doc-tests
+        run: |
+          # The step shell runs with -e; keep going after a failure to inspect the log.
+          set +e -uo pipefail
+          log="$RUNNER_TEMP/doctests.log"
+          # PACKAGE_ARGS, FEATURE_ARGS and LOCKED_ARGS are split on whitespace on purpose.
+          # shellcheck disable=SC2086
+          cargo test $PACKAGE_ARGS --doc $FEATURE_ARGS $LOCKED_ARGS 2>&1 | tee "$log"
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ] && grep -q 'no library targets found' "$log"; then
+            echo "::notice title=doctests skipped::no library target in the selected packages"
+            exit 0
+          fi
+          exit "$code"
+
+      - name: build (cross target, not run)
+        if: env.RUN == 'true' && env.NATIVE != 'true' && inputs.build-command != ''
+        env:
+          BUILD_COMMAND: ${{ inputs.build-command }}
+          FEATURE_ARGS: ${{ inputs.feature-args }}
+        run: eval "$BUILD_COMMAND"
+      # A wrapper that never reached sccache (e.g. clobbered by mise [env]) shows as zero
+      # compile requests; warn so it is not mistaken for a working cache.
+      - name: sccache stats
+        if: >-
+          always() && env.RUN == 'true' && inputs.sccache
+          && steps.sccache.outputs.enabled == 'true'
+        run: |
+          stats="$(sccache --show-stats --stats-format=json 2>/dev/null || true)"
+          sccache --show-stats || true
+          requests="$(printf '%s' "$stats" | jq -r '.stats.compile_requests // 0' 2>/dev/null || echo 0)"
+          if [ "${requests:-0}" = 0 ]; then
+            echo "::warning title=sccache::0 compile requests: rustc did not go through sccache (RUSTC_WRAPPER=${RUSTC_WRAPPER:-unset}, cargo sees: $(mise env 2>/dev/null | grep RUSTC_WRAPPER || true))"
+          fi
+
+      - name: Cancel the run on failure
+        if: failure() && inputs.cancel-run-on-failure
+        uses: $/.github/actions/cancel-run # nosemgrep: github-actions-mutable-action-tag
+
+
+  # Windows, macOS/iOS and other non-Linux entries: only after every Linux entry succeeded (or
+  # there are none). Same check names (`matrix.target`) as before.
+  rust-other:
+    name: ${{ matrix.target }}
+    needs: [plan, rust]
+    if: >-
+      ${{ !cancelled() && needs.plan.outputs.has-other == 'true'
+      && (needs.rust.result == 'success' || needs.rust.result == 'skipped') }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.matrix-other) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     # Never skipped at job level: that happens before the matrix expands and reports a single
