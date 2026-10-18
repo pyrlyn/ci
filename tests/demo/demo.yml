@@ -1,0 +1,5 @@
+jobs:
+  x:
+    uses: pyrlyn/ci/.github/workflows/ci-rust.yml@4e652d891cc6e6f0be316eda1a1f9630d76a8b7e # main
+  y:
+    uses: pyrlyn/ci/.github/actions/gate@main
