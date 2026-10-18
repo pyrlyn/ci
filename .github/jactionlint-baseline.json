@@ -10,6 +10,14 @@
       "message": "shellcheck reported issue in this script: SC2016:info:11:31: Expressions don't expand in single quotes, use double quotes for that"
     },
     {
+      "file": ".github/actions/sccache/action.yml",
+      "rule": "github-env",
+      "fingerprint": "6ebb8edf133d7bdf",
+      "context": "4d666b1998904fe9",
+      "occurrence": 0,
+      "message": "untrusted input from the variable BUCKET (inputs.bucket) is written to $GITHUB_ENV. an attacker who controls the value can set LD_PRELOAD or NODE_OPTIONS (a newline adds another variable) and run code in the next steps. do not write input that an outsider controls to $GITHUB_ENV; validate it first or pass it to the next step with $GITHUB_OUTPUT"
+    },
+    {
       "file": ".github/workflows/build-cli.yml",
       "rule": "missing-timeout",
       "fingerprint": "9c11787ba90227ec",
@@ -160,22 +168,6 @@
       "context": "77b112513fd382c9",
       "occurrence": 0,
       "message": "\"timeout-minutes\" is not set at this job. Set it to avoid wasting runner minutes when the job hangs"
-    },
-    {
-      "file": ".github/workflows/renovate.yml",
-      "rule": "github-app",
-      "fingerprint": "9ce6accc46f99233",
-      "context": "9926202d947f5be9",
-      "occurrence": 0,
-      "message": "no \"permission-*\" input is set, so the token gets every permission granted to the GitHub App. request only what the job needs, for instance \"permission-contents: read\""
-    },
-    {
-      "file": ".github/workflows/renovate.yml",
-      "rule": "github-app",
-      "fingerprint": "3bd4628256d1ce2f",
-      "context": "564330d66343f195",
-      "occurrence": 0,
-      "message": "\"owner\" without \"repositories\" issues a token with access to every repository of the owner where the app is installed. list the repositories the token is for in \"repositories\""
     },
     {
       "file": ".github/workflows/self-test.yml",
