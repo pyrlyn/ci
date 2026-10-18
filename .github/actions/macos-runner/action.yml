@@ -10,7 +10,7 @@ description: >-
 # a preceding ubuntu job and reads this action's output.
 inputs:
   runner:
-    description: Runner label for macOS jobs (the MACOS_RUNNER variable). Empty keeps every entry.
+    description: Runner label for macOS jobs (the MACOS_RUNNER variable). Empty or `hosted` keeps every entry.
     required: false
     default: ""
   value:
@@ -38,8 +38,8 @@ runs:
         set -euo pipefail
         out=$(jq -c --arg r "$RUNNER" --arg k "$KEY" '
           def mac: type == "string" and test("^(macos|xcode)");
-          def swap: if $r != "" and mac then $r else . end;
+          def swap: if ($r | ascii_downcase) != "hosted" and $r != "" and mac then $r else . end;
           map(if type == "object" then (if has($k) then .[$k] |= swap else . end) else swap end)
         ' <<<"$VALUE")
         echo "value=$out" >> "$GITHUB_OUTPUT"
-        if [ -n "$RUNNER" ]; then echo "::notice title=macos-runner::macOS jobs run on $RUNNER"; fi
+        if [ -n "$RUNNER" ] && [ "${RUNNER,,}" != hosted ]; then echo "::notice title=macos-runner::macOS jobs run on $RUNNER"; fi
