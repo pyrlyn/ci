@@ -330,6 +330,12 @@ jobs:
           set -euo pipefail
           m="${INPUT_MATRIX:-$SHARED_MATRIX}"
           echo "matrix=$(jq -c . <<<"$m")" >> "$GITHUB_OUTPUT"
+      # MACOS_RUNNER (org or repo variable) moves every macOS entry to that runner; see macos-runner.
+      - id: macos
+        uses: $/.github/actions/macos-runner # nosemgrep: github-actions-mutable-action-tag
+        with:
+          runner: ${{ vars.MACOS_RUNNER }}
+          value: ${{ steps.m.outputs.matrix }}
       - id: changes
         uses: $/.github/actions/changes # nosemgrep: github-actions-mutable-action-tag
       # A dependency change (or no diff) widens the packages to `full-package-args` and
@@ -362,7 +368,7 @@ jobs:
       # `skip-runs-on`, so a docs-only change queues no macOS, Windows or ARM runner.
       - id: runners
         env:
-          MATRIX: ${{ steps.m.outputs.matrix }}
+          MATRIX: ${{ steps.macos.outputs.value }}
           RUN: ${{ steps.scope.outputs.run }}
           SKIP_RUNS_ON: ${{ inputs.skip-runs-on }}
           MACOS_DISABLED: ${{ vars.MACOS_CI_DISABLED }}

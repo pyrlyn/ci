@@ -78,7 +78,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       json: ${{ steps.config.outputs.json }}
-      jobs: ${{ steps.config.outputs.jobs }}
+      jobs: ${{ steps.custom-jobs.outputs.value }}
       skip-ok: ${{ steps.config.outputs.skip-ok }}
       draft-skip: ${{ steps.config.outputs.draft-skip }}
       docs-only: ${{ steps.config.outputs.docs-only }}
@@ -88,6 +88,13 @@ jobs:
         with:
           config-file: ${{ inputs.config-file }}
           cancel-run-on-failure: ${{ inputs.cancel-run-on-failure }}
+      # MACOS_RUNNER (org or repo variable) moves macOS custom jobs to that runner; see macos-runner.
+      - id: custom-jobs
+        uses: $/.github/actions/macos-runner # nosemgrep: github-actions-mutable-action-tag
+        with:
+          runner: ${{ vars.MACOS_RUNNER }}
+          value: ${{ steps.config.outputs.jobs }}
+          key: runs-on
 
   rust:
     needs: config
