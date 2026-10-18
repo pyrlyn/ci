@@ -25,7 +25,7 @@ name: release-ci-alert
 #         actions: read
 #         contents: read
 #         pull-requests: write
-#       uses: pyrlyn/ci/.github/workflows/release-ci-alert.yml@<sha>
+#       uses: pyrlyn/ci/.github/workflows/release-ci-alert.yml@main
 #
 # Caller job permissions: actions: read, contents: read, pull-requests: write.
 on:

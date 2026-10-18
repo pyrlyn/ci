@@ -9,7 +9,7 @@ name: flatpak
 #       permissions:
 #         contents: read
 #         actions: write # cancel-run
-#       uses: pyrlyn/ci/.github/workflows/flatpak.yml@<sha>
+#       uses: pyrlyn/ci/.github/workflows/flatpak.yml@main
 #       with:
 #         manifest: desktop/linux/app.mailune.yml
 #         app-id: app.mailune.Mailune

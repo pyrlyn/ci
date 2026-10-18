@@ -27,7 +27,7 @@ jobs:
       github.actor == 'dependabot[bot]'
       && github.event.pull_request.user.login == 'dependabot[bot]'
       && github.event.pull_request.head.repo.full_name == github.repository
-    uses: pyrlyn/ci/.github/workflows/dependabot-automerge.yml@{{sha}} # main
+    uses: pyrlyn/ci/.github/workflows/dependabot-automerge.yml@main
     permissions:
       contents: write
       pull-requests: write
