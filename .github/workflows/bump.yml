@@ -249,11 +249,11 @@ jobs:
           fetch-depth: 0 # tags decide whether the current version was released
           persist-credentials: true # fetches; pushes go to an explicit URL (PUSH_TOKEN)
       - if: inputs.mise
-        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
         with:
           install_args: ${{ inputs.mise-install-args }}
       - if: inputs.release-script == '' && inputs.release-plz-update
-        uses: taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe # v2.87.27
+        uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
         with:
           tool: release-plz
 

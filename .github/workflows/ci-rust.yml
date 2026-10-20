@@ -419,7 +419,7 @@ jobs:
           persist-credentials: false
 
       - if: inputs.rust-version == ''
-        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
         with:
           working_directory: ${{ inputs.working-directory }}
           install_args: ${{ inputs.mise-install-args }}
@@ -485,7 +485,7 @@ jobs:
 
       # Default path: the Rust version pinned in the caller's mise.toml.
       - if: env.RUN == 'true' && inputs.rust-version == ''
-        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
         with:
           working_directory: ${{ inputs.working-directory }}
           # sccache: true also installs mise's sccache. A caller's mise.toml [env] may set
@@ -577,7 +577,7 @@ jobs:
             || github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
       - if: env.RUN == 'true' && inputs.tools != ''
-        uses: taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe # v2.87.27
+        uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
         with:
           tool: ${{ inputs.tools }}
 
@@ -772,7 +772,7 @@ jobs:
 
       # Default path: the Rust version pinned in the caller's mise.toml.
       - if: env.RUN == 'true' && inputs.rust-version == ''
-        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
         with:
           working_directory: ${{ inputs.working-directory }}
           # sccache: true also installs mise's sccache. A caller's mise.toml [env] may set
@@ -864,7 +864,7 @@ jobs:
             || github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
       - if: env.RUN == 'true' && inputs.tools != ''
-        uses: taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe # v2.87.27
+        uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
         with:
           tool: ${{ inputs.tools }}
 
