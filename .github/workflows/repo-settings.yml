@@ -1,0 +1,44 @@
+name: repo-settings
+
+# Reusable: applies and verifies the shared `main` protection (the rtok/ketch rulesets,
+# required checks limited to those that have run on the caller's main) and allow_auto_merge
+# (on for public, off for private), then fails on any mismatch.
+# Logic: tools/repo-settings/repo_settings.py (Python, stdlib; tests in tests/repo-settings).
+# Auth: REPO_ADMIN_TOKEN, a token with administration:write on the caller (GITHUB_TOKEN cannot
+# manage rulesets). Callers reference this workflow @main and run it on push to main,
+# a schedule and workflow_dispatch, not on pull requests.
+on:
+  workflow_call:
+    inputs:
+      mode:
+        description: apply (fix, then verify) or verify (report only).
+        type: string
+        required: false
+        default: apply
+    secrets:
+      REPO_ADMIN_TOKEN:
+        description: Token with administration write access on the calling repository.
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  repo-settings:
+    name: repo-settings
+    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: pyrlyn/ci
+          ref: main
+          path: infra
+          persist-credentials: false
+          sparse-checkout: tools/repo-settings
+      - name: Apply and verify
+        env:
+          GH_TOKEN: ${{ secrets.REPO_ADMIN_TOKEN }}
+          REPO: ${{ github.repository }}
+          MODE: ${{ inputs.mode }}
+        run: python3 infra/tools/repo-settings/repo_settings.py
