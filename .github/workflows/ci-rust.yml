@@ -82,7 +82,7 @@ on:
         description: Runner label for the fmt job.
         type: string
         required: false
-        default: ubuntu-latest
+        default: xcode-27-local
       working-directory:
         description: Directory of the Cargo workspace, relative to the repository root.
         type: string
@@ -230,7 +230,7 @@ on:
           Empty keeps each entry's own `os`.
         type: string
         required: false
-        default: ubuntu-latest
+        default: xcode-27-local
       full-package-args:
         description: >-
           Package selection used instead of `package-args` when a Cargo.toml or Cargo.lock
@@ -313,7 +313,7 @@ jobs:
     if: >-
       !inputs.skip-drafts
       || github.event_name != 'pull_request' || !github.event.pull_request.draft
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
     timeout-minutes: 10
     outputs:
       matrix-linux: ${{ steps.runners.outputs.matrix-linux }}
@@ -382,7 +382,7 @@ jobs:
           # Org variable MACOS_CI_DISABLED=true: every macOS entry (macos-*, xcode-27*) keeps its
           # check name but runs as a no-op on ubuntu (`disabled` makes its steps no-ops).
           if [ "$MACOS_DISABLED" = true ]; then
-            m=$(jq -c --arg os "${SKIP_RUNS_ON:-ubuntu-latest}" \
+            m=$(jq -c --arg os "${SKIP_RUNS_ON:-xcode-27-local}" \
               'map(if (.os | test("^(macos|xcode)")) then .os = $os | .disabled = true else . end)' <<<"$m")
             echo "::notice title=ci-rust::MACOS_CI_DISABLED is true; macOS entries are no-ops"
           fi
@@ -1023,7 +1023,7 @@ jobs:
     name: msrv
     needs: plan
     if: inputs.msrv != '' && needs.plan.outputs.run == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     env:
       PACKAGE_ARGS: ${{ needs.plan.outputs.package-args }}

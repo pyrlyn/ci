@@ -14,7 +14,7 @@ CHECKS = ["rust", "dotnet", "codeql", "semgrep", "snyk", "sonarcloud", "lint", "
 JOB_DEFAULTS = {
     "enabled": True,
     "events": [],
-    "runs-on": "ubuntu-latest",
+    "runs-on": "xcode-27-local",
     "matrix": [],
     "setup": "",
     "mise": True,

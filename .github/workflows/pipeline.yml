@@ -40,7 +40,7 @@ on:
         description: ci-rust.yml `fmt-runs-on`.
         type: string
         required: false
-        default: ubuntu-latest
+        default: xcode-27-local
       rust-working-directory:
         description: ci-rust.yml `working-directory`.
         type: string
@@ -160,7 +160,7 @@ on:
         description: codeql.yml `runs-on`.
         type: string
         required: false
-        default: ubuntu-latest
+        default: xcode-27-local
       semgrep:
         description: Run semgrep.yml.
         type: boolean
@@ -307,7 +307,7 @@ jobs:
     if: >-
       always()
       && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
     timeout-minutes: 10
     outputs:
       result: ${{ steps.done.outputs.result }}
