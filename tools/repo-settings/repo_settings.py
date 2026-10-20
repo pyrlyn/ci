@@ -19,7 +19,7 @@ import urllib.request
 
 API = "https://api.github.com"
 TEMPLATE_CHECKS = [
-    "gate", "pipeline / gate", "rust / plan", "rust / fmt",
+    "pipeline / gate", "rust / plan", "rust / fmt",
     "rust / x86_64-unknown-linux-gnu", "rust / aarch64-unknown-linux-gnu",
     "rust / aarch64-apple-darwin", "rust / x86_64-pc-windows-msvc",
     "commits", "powershell", "macos-app", "ketch-ffi", "design",
