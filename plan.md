@@ -6,15 +6,10 @@ Shared, SHA-pinned reusable GitHub Actions workflows (mainly `ci-rust.yml`, a fi
 
 | # | Status | Priority | Complexity | Readiness | Agent |
 | --- | --- | --- | --- | --- | --- |
-| T2 | done | P2 | 1 | 100% | |
 | T3 | done | P3 | 2 | 100% | |
 | T4 | done | P3 | 1 | 100% | |
 
-Audit note (2026-10-07): the local checkout was 96 commits behind `origin/main` and README/docs still pointed at the nonexistent `listepo/infra` repo (renamed to `pyrlyn/ci` upstream in `933ef57`). T2–T4 were found in the stale tree — re-verify each against current `origin/main` before working on it.
-
-### T2. Run actionlint on pushes to main
-
-Done. `.github/workflows/lint.yml` now triggers on `push: branches: [main]` as well as `pull_request` and `workflow_dispatch`. A merge or a direct commit to main runs actionlint. `workflow_call` is unchanged, so SHA-pinned callers are unaffected.
+Audit note (2026-10-07): the local checkout was 96 commits behind `origin/main` and README/docs still pointed at the nonexistent `listepo/infra` repo (renamed to `pyrlyn/ci` upstream in `933ef57`). T3–T4 were found in the stale tree — re-verify each against current `origin/main` before working on it.
 
 ### T3. Extend self-test coverage to the custom inputs
 
