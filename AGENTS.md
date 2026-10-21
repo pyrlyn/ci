@@ -6,8 +6,7 @@ If an AGENTS.md or CLAUDE.md exists higher in the tree, follow it too; on confli
 
 Shared, SHA-pinned reusable GitHub Actions workflows for the other repositories
 (rtok, ketch, stator, bindsmith, runa, cox). This checkout's `origin` is
-`git@github.com:pyrlyn/ci.git`. The README and `docs/index.md` still say
-`listepo/infra`.
+`git@github.com:pyrlyn/ci.git`.
 
 | Workflow | Role |
 | --- | --- |
@@ -20,10 +19,10 @@ Callers pin a full commit SHA:
 ```yaml
 jobs:
   rust:
-    uses: listepo/infra/.github/workflows/ci-rust.yml@<full commit sha>
+    uses: pyrlyn/ci/.github/workflows/ci-rust.yml@<full commit sha>
 ```
 
-The README still writes that `uses:` line with `listepo/infra`. Inputs, pinning, and secrets are in `docs/index.md`.
+Inputs, pinning, and secrets are in `docs/index.md`.
 
 ## Commands
 

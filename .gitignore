@@ -4,6 +4,9 @@
 **/*.rs.bk
 *.pdb
 
+# Python
+__pycache__/
+
 # Editors and OS
 .DS_Store
 .idea/
