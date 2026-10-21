@@ -42,4 +42,4 @@ runs:
           map(if type == "object" then (if has($k) then .[$k] |= swap else . end) else swap end)
         ' <<<"$VALUE")
         echo "value=$out" >> "$GITHUB_OUTPUT"
-        if [ -n "$RUNNER" ] && [ "${RUNNER,,}" != hosted ]; then echo "::notice title=macos-runner::macOS jobs run on $RUNNER"; fi
+        if [ -n "$RUNNER" ] && [ "$(printf %s "$RUNNER" | tr "[:upper:]" "[:lower:]")" != hosted ]; then echo "::notice title=macos-runner::macOS jobs run on $RUNNER"; fi
