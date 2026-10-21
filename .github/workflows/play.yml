@@ -50,7 +50,7 @@ on:
         description: Runner label. Needs a JDK so jarsigner can check the bundle.
         type: string
         required: false
-        default: ubuntu-latest
+        default: xcode-27-local
       timeout-minutes:
         description: Timeout of the job.
         type: number

@@ -65,7 +65,7 @@ permissions:
 jobs:
   sync:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
     timeout-minutes: 10
     # inputs.site-branch, for the fetch below. actions/checkout's ref on a reusable workflow is
     # classified as a pull-request head checkout, so the publish branch is fetched afterwards.

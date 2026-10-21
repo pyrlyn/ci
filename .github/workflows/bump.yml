@@ -229,7 +229,7 @@ concurrency:
 
 jobs:
   bump:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
     timeout-minutes: 360
     permissions:
       contents: write # bump branch, tag, Release
@@ -598,7 +598,7 @@ jobs:
     if: >-
       always() && inputs.notify-maintainer != '' && !inputs.dry-run
       && contains(needs.*.result, 'failure')
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
     timeout-minutes: 5
     permissions:
       actions: read # failed job names

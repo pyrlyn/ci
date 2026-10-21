@@ -74,7 +74,7 @@ permissions:
 
 jobs:
   config:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
     timeout-minutes: 5
     outputs:
       json: ${{ steps.config.outputs.json }}
@@ -245,7 +245,7 @@ jobs:
   commits:
     needs: config
     if: fromJSON(needs.config.outputs.json).commits.run
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
     timeout-minutes: 10
     steps:
       # Full history: the range runs from the pull request's base branch to HEAD.
@@ -349,7 +349,7 @@ jobs:
     # `skipped` (which counts as passed). Skipped on a draft PR when skip-drafts is on, like
     # pipeline.yml, so a draft never shows a green gate. A failed `config` fails the gate.
     if: always() && needs.config.outputs.draft-skip != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
     timeout-minutes: 10
     outputs:
       result: ${{ steps.done.outputs.result }}
@@ -371,7 +371,7 @@ jobs:
       always() && inputs.notify-main-failure && inputs.main-failure-maintainer != ''
       && github.ref == 'refs/heads/main'
       && contains(fromJSON('["push", "schedule", "workflow_dispatch"]'), github.event_name)
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
     timeout-minutes: 5
     permissions:
       issues: write
