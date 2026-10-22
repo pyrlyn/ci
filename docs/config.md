@@ -82,7 +82,8 @@ sonarcloud: {enabled: false, events: [push, pull_request, workflow_dispatch], or
              coverage-command: "", soft-fail: true, timeout-minutes: 60}
 lint:       {enabled: true, jactionlint-version: 2.0.2, args: "", extra-command: ""}
 license:    {enabled: false, docs-only: true, canonical-ref: main, check-headers: false,
-             header-exclude: ""}                     # -> `<caller job> / license / license-check`
+             header-exclude: "", repo: "", targets: targets.yml,
+             path: "."}                              # -> `<caller job> / license / license-check`
 commits:    {enabled: false, events: [pull_request], docs-only: true, tool: grep,
              types: [feat, fix, docs, ci, test, chore, style, refactor, perf, build]}
 
@@ -123,7 +124,10 @@ Defaults that replace per-repository workarounds:
   `.github/jactionlint.yaml` to change that.
 - `sonarcloud.events`: push, pull_request and workflow_dispatch, not the weekly schedule.
 - `license` runs license-check.yml inside ci.yml (a repository's own `license-check.yml`
-  caller is no longer needed); `commits` runs the `commits` action (Conventional Commits
+  caller is no longer needed). It always runs on ubuntu-latest, never on a Windows or macOS
+  runner. `repo` picks the entry in `licenses/<targets>` (empty: this repository) and `path`
+  the directory checked (a subproject). Any repository can also call
+  `pyrlyn/ci/.github/workflows/license-check.yml@main` directly with the same inputs; `commits` runs the `commits` action (Conventional Commits
   subjects of a pull request; `tool: commitlint` uses the repository's commitlint config). A
   repository whose ruleset requires a check named `commits` keeps its own job and calls
   `pyrlyn/ci/.github/actions/commits@<sha>` in it, so the check name stays.

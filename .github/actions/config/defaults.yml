@@ -135,6 +135,10 @@ license:
   canonical-ref: main
   check-headers: false
   header-exclude: ""
+  repo: ""              # owner/name in licenses/targets.yml; empty = this repository
+  targets: targets.yml  # targets file in pyrlyn/ci's licenses/
+  path: "."             # directory of this repository to check
+  # Always ubuntu-latest (license-check.yml): never a Windows or macOS runner.
 
 # Conventional Commits subjects of a pull request's commits (the `commits` action):
 # `pipeline / commits`. Only pull_request events have a commit range; others pass.
