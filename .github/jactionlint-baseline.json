@@ -34,14 +34,6 @@
       "message": "\"timeout-minutes\" is not set at this job. Set it to avoid wasting runner minutes when the job hangs"
     },
     {
-      "file": ".github/workflows/bump.yml",
-      "rule": "cache-poisoning",
-      "fingerprint": "4c53acc815837884",
-      "context": "48ee729b9c71e848",
-      "occurrence": 0,
-      "message": "jdx/mise-action restores a cache although the job runs \"gh release create\", so a poisoned cache entry can end up in the published artifacts. set \"cache: false\", or set \"cache-mode: none\" on the job"
-    },
-    {
       "file": ".github/workflows/ci-rust.yml",
       "rule": "excessive-permissions",
       "fingerprint": "9bd1b1c5e3a573f7",
@@ -106,14 +98,6 @@
       "message": "\"timeout-minutes\" is not set at this job. Set it to avoid wasting runner minutes when the job hangs"
     },
     {
-      "file": ".github/workflows/release-apple-desktop.yml",
-      "rule": "cache-poisoning",
-      "fingerprint": "c8a03e67890a8169",
-      "context": "5e4783da018d668b",
-      "occurrence": 0,
-      "message": "jdx/mise-action restores a cache although the job runs \"gh release create\", so a poisoned cache entry can end up in the published artifacts. set \"cache: false\", or set \"cache-mode: none\" on the job"
-    },
-    {
       "file": ".github/workflows/release-plz.yml",
       "rule": "excessive-permissions",
       "fingerprint": "9bd1b1c5e3a573f7",
@@ -160,14 +144,6 @@
       "context": "76fd9b3924267e58",
       "occurrence": 0,
       "message": "\"timeout-minutes\" is not set at this job. Set it to avoid wasting runner minutes when the job hangs"
-    },
-    {
-      "file": ".github/workflows/release.yml",
-      "rule": "cache-poisoning",
-      "fingerprint": "e756a685e4b6e683",
-      "context": "5e4783da018d668b",
-      "occurrence": 0,
-      "message": "jdx/mise-action restores a cache although the job runs \"gh release upload\", so a poisoned cache entry can end up in the published artifacts. set \"cache: false\", or set \"cache-mode: none\" on the job"
     },
     {
       "file": ".github/workflows/release.yml",
