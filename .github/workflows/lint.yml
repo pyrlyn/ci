@@ -53,8 +53,8 @@ on:
 # merge into main), where each run gets a group of its own. Called (workflow_call): the github context,
 # github.workflow and github.workflow_ref included, is the caller's, so a shared group would
 # let a newer caller run cancel this job inside an older caller run, e.g. two pushes to a
-# consumer's main: the older run's gate then fails on a cancelled lint and revert-on-failure
-# reverts a good commit. So a called lint gets a group of its own run and never cancels;
+# consumer's main: the older run would lose its lint result (when gates still failed on a
+# cancelled job, revert-on-failure then reverted a good commit). So a called lint gets a group of its own run and never cancels;
 # cancelling older runs is the caller's workflow-level `concurrency` (docs/reusable-workflows.md).
 concurrency:
   group: >-

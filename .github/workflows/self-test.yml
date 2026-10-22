@@ -341,6 +341,7 @@ jobs:
       - run: bash tests/changes/test.sh
       # The config action's docs-only switch (normalize.py), offline.
       - run: bash tests/config/test.sh
+      - run: bash tests/gate/test.sh
       # The commits action's script on a scratch repository, offline.
       - run: bash tests/commits/test.sh
       # pin-sync's rewrite and template rendering on a scratch checkout, offline.

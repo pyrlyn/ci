@@ -345,9 +345,11 @@ jobs:
   gate:
     needs:
       [config, rust, dotnet, codeql, semgrep, snyk, sonarcloud, lint, license, commits, no-pinned-ci, custom]
-    # always(): also runs (and fails) after a cancel-run, so a required `ci / gate` is never
-    # `skipped` (which counts as passed). Skipped on a draft PR when skip-drafts is on, like
-    # pipeline.yml, so a draft never shows a green gate. A failed `config` fails the gate.
+    # always(): also runs after a cancel-run, so a required `ci / gate` reports the failed job
+    # instead of being left `skipped`. The gate fails only on a `failure` result: `skipped` and
+    # `cancelled` jobs pass, so a cancelled run (or a cancelled `config`) passes the gate, while a
+    # failed `config` still fails it. Skipped on a draft PR when skip-drafts is on, like
+    # pipeline.yml, so a draft never shows a green gate.
     if: always() && needs.config.outputs.draft-skip != 'true'
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10

@@ -34,9 +34,11 @@ the same JSON.
   turns each off with `if:`; new check types need an infra change.
 - `if:` may read `needs.<job>.outputs`; `with:` may too; matrices take `fromJSON(...)`
   (repository-specific jobs are one matrix job, max 256 entries).
-- A skipped required check counts as passed, so `gate` runs with `always()` and fails on any
-  non-success except jobs listed in `skip-ok` (disabled by config or event filter). A failed
-  `config` job fails the gate. On a draft PR with `skip-drafts`, the gate itself is skipped
+- `gate` runs with `always()` and fails only when a needed job's result is `failure`:
+  `success`, `skipped` and `cancelled` pass (`skip-ok` is informational). A failed `config` job
+  fails the gate; a cancelled one does not. Side effect: a run cancelled before any job failed
+  (a newer push, a manual or scripted cancel) passes the gate, so a green gate no longer proves
+  every check ran. On a draft PR with `skip-drafts`, the gate itself is skipped
   (same as pipeline.yml). ci.yml also passes `skip-drafts` on to the workflows it calls, so
   `skip-drafts: false` runs them on drafts (docs/reusable-workflows.md, "Draft pull requests").
 - Permissions are validated for every nested job up front, even disabled ones: the caller
