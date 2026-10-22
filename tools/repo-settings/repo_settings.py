@@ -116,6 +116,10 @@ def merge_up(cur, want):
 
 
 def main():
+    if not os.environ.get("GH_TOKEN", "").strip():
+        print("::error::REPO_ADMIN_TOKEN is not set (GH_TOKEN empty); "
+              "add a token with Administration: read/write")
+        return 1
     repo, mode = os.environ["REPO"], os.environ.get("MODE", "apply")
     errors = []
     st, info = api("GET", f"/repos/{repo}")

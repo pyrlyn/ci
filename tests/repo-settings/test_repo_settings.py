@@ -9,6 +9,13 @@ spec.loader.exec_module(rs)
 
 
 class T(unittest.TestCase):
+    def test_empty_token_fails_fast(self):
+        from unittest import mock
+        env = {"GH_TOKEN": "", "REPO": "o/r"}
+        with mock.patch.dict(rs.os.environ, env), mock.patch.object(rs, "api") as api:
+            self.assertEqual(rs.main(), 1)
+            api.assert_not_called()
+
     def test_no_checks_rule_when_none_ran(self):
         rules = rs.desired([])["protect-main"]["rules"]
         self.assertNotIn("required_status_checks", {r["type"] for r in rules})
