@@ -10,6 +10,11 @@ name: license-check
 # Optionally (`check-headers`) every tracked source file must carry an
 # SPDX-License-Identifier header in its first 10 lines.
 #
+# Runs on ubuntu-latest only, whatever the caller's runners are: the check is OS-independent,
+# so it never takes a Windows, macOS or self-hosted Mac runner. Callable from any repository
+# (`uses: pyrlyn/ci/.github/workflows/license-check.yml@main`), directly or through ci.yml's
+# `license` config key.
+#
 # Caller job permissions: contents: read, actions: write (cancel-run).
 on:
   workflow_call:
@@ -43,6 +48,25 @@ on:
         type: string
         required: false
         default: ""
+      repo:
+        description: >-
+          owner/name whose entry in the targets file is checked. Empty: the calling repository.
+        type: string
+        required: false
+        default: ""
+      targets:
+        description: >-
+          Targets file inside pyrlyn/ci's licenses/ (maps each repository to its license paths).
+        type: string
+        required: false
+        default: targets.yml
+      path:
+        description: >-
+          Directory of the calling repository to check, relative to its root (a subproject in a
+          monorepo). Default: the root.
+        type: string
+        required: false
+        default: "."
       cancel-run-on-failure:
         description: >-
           When the check fails, cancel the whole workflow run. The calling job must grant
@@ -67,7 +91,7 @@ jobs:
       !inputs.skip-drafts
       || github.event_name != 'pull_request' || !github.event.pull_request.draft
     name: license-check
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     # inputs.canonical-ref, for the fetch below. actions/checkout's ref on a reusable workflow
     # is classified as a pull-request head checkout, so the canonical commit is fetched afterwards.
@@ -109,19 +133,27 @@ jobs:
         run: cargo build --release --locked --manifest-path infra/tools/license-kit/Cargo.toml
       - name: Compare with pyrlyn/ci's canonical license files
         env:
-          REPO: ${{ github.repository }}
+          REPO: ${{ inputs.repo || github.repository }}
+          TARGETS: ${{ inputs.targets || 'targets.yml' }}
+          CHECK_PATH: ${{ inputs.path || '.' }}
           CHECK_HEADERS: ${{ inputs.check-headers && 'true' || 'false' }}
           HEADER_EXCLUDE: ${{ inputs.header-exclude }}
         run: |
           set -euo pipefail
-          args=(drift-check --config infra/licenses/targets.yml --repo "$REPO")
+          case "$TARGETS/$CHECK_PATH" in
+            /*|*..*|-*)
+              echo "::error::targets and path must be relative and stay inside their checkout" >&2
+              exit 1
+              ;;
+          esac
+          args=(drift-check --config "infra/licenses/$TARGETS" --repo "$REPO")
           if [ "$CHECK_HEADERS" = true ]; then
             args+=(--headers)
             while IFS= read -r pat; do
               if [ -n "$pat" ]; then args+=(--header-exclude "$pat"); fi
             done <<<"$HEADER_EXCLUDE"
           fi
-          infra/tools/license-kit/target/release/license-kit "${args[@]}" repo
+          infra/tools/license-kit/target/release/license-kit "${args[@]}" "repo/$CHECK_PATH"
       - name: Cancel the run on failure
         if: failure() && inputs.cancel-run-on-failure
         uses: $/.github/actions/cancel-run # nosemgrep: github-actions-mutable-action-tag

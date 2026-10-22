@@ -240,6 +240,9 @@ jobs:
       canonical-ref: ${{ fromJSON(needs.config.outputs.json).license.canonical-ref }}
       check-headers: ${{ fromJSON(needs.config.outputs.json).license.check-headers }}
       header-exclude: ${{ fromJSON(needs.config.outputs.json).license.header-exclude }}
+      repo: ${{ fromJSON(needs.config.outputs.json).license.repo }}
+      targets: ${{ fromJSON(needs.config.outputs.json).license.targets }}
+      path: ${{ fromJSON(needs.config.outputs.json).license.path }}
 
   # A pull request's commit subjects must be Conventional Commits.
   commits:
