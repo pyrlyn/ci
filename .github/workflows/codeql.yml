@@ -59,7 +59,7 @@ on:
         description: Runner label.
         type: string
         required: false
-        default: xcode-27-local
+        default: ubuntu-latest
       upload:
         description: >-
           Upload results to code scanning. false keeps the SARIF as an artifact (private

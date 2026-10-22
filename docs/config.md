@@ -34,9 +34,11 @@ the same JSON.
   turns each off with `if:`; new check types need an infra change.
 - `if:` may read `needs.<job>.outputs`; `with:` may too; matrices take `fromJSON(...)`
   (repository-specific jobs are one matrix job, max 256 entries).
-- A skipped required check counts as passed, so `gate` runs with `always()` and fails on any
-  non-success except jobs listed in `skip-ok` (disabled by config or event filter). A failed
-  `config` job fails the gate. On a draft PR with `skip-drafts`, the gate itself is skipped
+- `gate` runs with `always()` and fails only when a needed job's result is `failure`:
+  `success`, `skipped` and `cancelled` pass (`skip-ok` is informational). A failed `config` job
+  fails the gate; a cancelled one does not. Side effect: a run cancelled before any job failed
+  (a newer push, a manual or scripted cancel) passes the gate, so a green gate no longer proves
+  every check ran. On a draft PR with `skip-drafts`, the gate itself is skipped
   (same as pipeline.yml). ci.yml also passes `skip-drafts` on to the workflows it calls, so
   `skip-drafts: false` runs them on drafts (docs/reusable-workflows.md, "Draft pull requests").
 - Permissions are validated for every nested job up front, even disabled ones: the caller
@@ -121,6 +123,12 @@ Defaults that replace per-repository workarounds:
   and security rules (`generated-files: skip-policy`, its default), so lint stays on in
   repositories that ship with dist. Set `generated-files` in the repository's
   `.github/jactionlint.yaml` to change that.
+- Runners: every OS-independent job (config, commits, gate, main-failure, lint/actionlint,
+  no-pinned-ci, rust plan/msrv/fmt and the docs-only skip entries, codeql and dotnet by
+  default) runs on `ubuntu-latest`. The `CI_RUNNER` variable (repository or organization)
+  still overrides the fixed jobs, and `rust.fmt-runs-on`, `dotnet.runs-on` and
+  `codeql.runs-on` override theirs. Platform-specific runners (the rust matrix, custom jobs'
+  `runs-on`, macOS signing, dmg and TestFlight, release/dist) are unchanged.
 - `sonarcloud.events`: push, pull_request and workflow_dispatch, not the weekly schedule.
 - `license` runs license-check.yml inside ci.yml (a repository's own `license-check.yml`
   caller is no longer needed); `commits` runs the `commits` action (Conventional Commits

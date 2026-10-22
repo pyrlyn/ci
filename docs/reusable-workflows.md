@@ -101,7 +101,7 @@ failing job (a test, clippy, fmt, CodeQL, Semgrep, Snyk, SonarCloud, a release s
 the whole run at once: every other running or queued job, the caller's own jobs included
 (`github.run_id` inside a reusable workflow is the caller's run). Matrices use
 `fail-fast: true`. `pipeline.yml`'s `gate` runs with `always()`, so after such a cancel it
-fails instead of being skipped (a skipped required check counts as passed). A calling job that
+reports the failed job (the cancelled ones pass; only `failure` fails the gate). A calling job that
 grants less than `actions: write` makes the run fail at startup (GitHub refuses a nested job
 that asks for more than its caller grants), even with the input off. Pass
 `cancel-run-on-failure: false` where a later job of the caller must still run after a failure,
@@ -112,7 +112,7 @@ Composite actions (reference them as `pyrlyn/ci/.github/actions/<name>@<sha>`):
 
 | Action | Purpose |
 | --- | --- |
-| `gate` | fail unless every job in a `needs` JSON succeeded (`skip-ok` lists allowed skips) |
+| `gate` | fail only when a job in a `needs` JSON has result `failure` (skipped/cancelled pass) |
 | `revert-on-failure` | revert a failed push, push the revert, open a draft re-apply PR |
 | `macos-sign` | Developer ID codesign (or identity discovery for cargo-dist) + notarization |
 | `macos-runner` | the one definition of the `MACOS_RUNNER` switch: macOS runner labels of a JSON list/matrix -> the variable's value (hosted default when unset) |
@@ -172,7 +172,8 @@ concurrency:
   `pipeline.yml`, `ci-rust.yml`, scans, `sonarcloud.yml`): inside a called workflow the
   `github` context is the caller's, so a group built from `github.workflow` equals the
   caller's group and cancels or deadlocks the caller (docs/github-limits.md), and a
-  cancel inside an older caller run fails its `gate` instead of cancelling the run cleanly.
+  cancel inside an older caller run silently drops checks from it (its `gate` passes cancelled
+  jobs).
 - `lint.yml` cancels older runs only when it runs directly in this repository; called, it
   uses a group of its own run and never cancels.
 - This repository's own triggered workflows (`action-pins.yml`, `lint.yml`, `self-test.yml`)

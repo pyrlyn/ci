@@ -1,8 +1,8 @@
 name: pipeline
 
 # Reusable gated pipeline: Rust CI (optional), CodeQL, Semgrep and Snyk run in parallel as
-# reusable workflows of this repository; `gate` passes only when every enabled job finished
-# with `success` (failure, cancelled or skipped fail it). Callers make release/deploy jobs
+# reusable workflows of this repository; `gate` fails only when a job finished with `failure`
+# (`success`, `skipped` and `cancelled` pass). Callers make release/deploy jobs
 # `needs:` this job. Draft pull requests skip every job, the gate included.
 #
 # Sibling workflows are referenced with `$/` (self-repository syntax), so they resolve to this
@@ -301,18 +301,19 @@ jobs:
 
   gate:
     needs: [rust, codeql, semgrep, snyk]
-    # always(): also runs (and fails) when the run was cancelled, e.g. by cancel-run after a
-    # failed job, so a required `gate` check is never left `skipped` (which counts as passed).
+    # always(): also runs when the run was cancelled, e.g. by cancel-run after a failed job, so a
+    # required `gate` reports that failure instead of being left `skipped`. Cancelled and skipped
+    # jobs pass the gate; only `failure` fails it.
     # Skipped on draft PRs like every other job, so a draft never leaves a green `gate` behind.
     if: >-
       always()
       && (github.event_name != 'pull_request' || !github.event.pull_request.draft)
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     outputs:
       result: ${{ steps.done.outputs.result }}
     steps:
-      # A job turned off by its input is `skipped` on purpose; any other non-success fails.
+      # Jobs turned off by input (informational for the gate; skipped jobs pass anyway).
       - name: Jobs turned off by input
         id: off
         env:

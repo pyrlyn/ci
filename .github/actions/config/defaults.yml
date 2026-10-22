@@ -31,7 +31,7 @@ rust:
   docs-only: false  # true: also runs on a docs-only change
   matrix: []            # [] = ci-rust.yml's shared four-target matrix
   rust-version: ""
-  fmt-runs-on: xcode-27-local
+  fmt-runs-on: ubuntu-latest
   working-directory: "."
   mise-install-args: rust
   clippy-args: ""
@@ -70,7 +70,7 @@ dotnet:
   working-directory: "."
   test-command: ""       # "" = dotnet test for every solution (or project)
   changed-only: false
-  runs-on: xcode-27-local
+  runs-on: ubuntu-latest
   timeout-minutes: 60
 
 codeql:
@@ -82,7 +82,7 @@ codeql:
   build-command: ""
   queries: security-and-quality
   config-file: ""
-  runs-on: xcode-27-local
+  runs-on: ubuntu-latest
 
 semgrep:
   enabled: auto

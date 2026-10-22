@@ -74,7 +74,7 @@ permissions:
 
 jobs:
   config:
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 5
     outputs:
       json: ${{ steps.config.outputs.json }}
@@ -245,7 +245,7 @@ jobs:
   commits:
     needs: config
     if: fromJSON(needs.config.outputs.json).commits.run
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     steps:
       # Full history: the range runs from the pull request's base branch to HEAD.
@@ -345,11 +345,13 @@ jobs:
   gate:
     needs:
       [config, rust, dotnet, codeql, semgrep, snyk, sonarcloud, lint, license, commits, no-pinned-ci, custom]
-    # always(): also runs (and fails) after a cancel-run, so a required `ci / gate` is never
-    # `skipped` (which counts as passed). Skipped on a draft PR when skip-drafts is on, like
-    # pipeline.yml, so a draft never shows a green gate. A failed `config` fails the gate.
+    # always(): also runs after a cancel-run, so a required `ci / gate` reports the failed job
+    # instead of being left `skipped`. The gate fails only on a `failure` result: `skipped` and
+    # `cancelled` jobs pass, so a cancelled run (or a cancelled `config`) passes the gate, while a
+    # failed `config` still fails it. Skipped on a draft PR when skip-drafts is on, like
+    # pipeline.yml, so a draft never shows a green gate.
     if: always() && needs.config.outputs.draft-skip != 'true'
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     outputs:
       result: ${{ steps.done.outputs.result }}
@@ -371,7 +373,7 @@ jobs:
       always() && inputs.notify-main-failure && inputs.main-failure-maintainer != ''
       && github.ref == 'refs/heads/main'
       && contains(fromJSON('["push", "schedule", "workflow_dispatch"]'), github.event_name)
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 5
     permissions:
       issues: write
