@@ -59,7 +59,7 @@ on:
         description: Runner label.
         type: string
         required: false
-        default: xcode-27-local
+        default: ubuntu-latest
       timeout-minutes:
         description: Timeout of the job.
         type: number

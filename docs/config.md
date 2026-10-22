@@ -121,6 +121,12 @@ Defaults that replace per-repository workarounds:
   and security rules (`generated-files: skip-policy`, its default), so lint stays on in
   repositories that ship with dist. Set `generated-files` in the repository's
   `.github/jactionlint.yaml` to change that.
+- Runners: every OS-independent job (config, commits, gate, main-failure, lint/actionlint,
+  no-pinned-ci, rust plan/msrv/fmt and the docs-only skip entries, codeql and dotnet by
+  default) runs on `ubuntu-latest`. The `CI_RUNNER` variable (repository or organization)
+  still overrides the fixed jobs, and `rust.fmt-runs-on`, `dotnet.runs-on` and
+  `codeql.runs-on` override theirs. Platform-specific runners (the rust matrix, custom jobs'
+  `runs-on`, macOS signing, dmg and TestFlight, release/dist) are unchanged.
 - `sonarcloud.events`: push, pull_request and workflow_dispatch, not the weekly schedule.
 - `license` runs license-check.yml inside ci.yml (a repository's own `license-check.yml`
   caller is no longer needed); `commits` runs the `commits` action (Conventional Commits
