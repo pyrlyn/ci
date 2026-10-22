@@ -542,6 +542,8 @@ jobs:
           merge-multiple: true
       - if: inputs.mise && inputs.notes-command != ''
         uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+        with:
+          cache: false # job publishes a release; never restore a shared cache
       - name: Notes
         if: inputs.notes-command != ''
         env:
