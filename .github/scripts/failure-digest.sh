@@ -11,7 +11,7 @@
 # (mentioned and assigned, default listepo), SINCE_HOURS (default 24), DIGEST_TZ (default
 # Europe/Kyiv), LABEL (default failure-digest), RELEASE_LABEL (default release-failure),
 # DRY_RUN=true prints the digest instead of posting it, NOW (epoch seconds; test hook).
-# Needs gh, jq and GNU date.
+# Needs gh and jq. The self-hosted runner is macOS, whose date has no GNU -d.
 set -euo pipefail
 : "${REPOS:?}" "${GH_REPO:?}"
 WHO="${WHO:-listepo}"
@@ -22,10 +22,21 @@ RELEASE_LABEL="${RELEASE_LABEL:-release-failure}"
 here="$(cd "$(dirname "$0")" && pwd)"
 notify="$here/../actions/notify-release-failure/notify-issue.sh"
 
+# GNU date takes -d; BSD date (macOS) takes -r for an epoch and -j -f to parse.
+if date -u -d @0 +%s >/dev/null 2>&1; then
+  utc_iso() { date -u -d "@$1" +%Y-%m-%dT%H:%M:%SZ; }
+  local_time() { TZ="$DIGEST_TZ" date -d "$1" '+%Y-%m-%d %H:%M %Z'; }
+else
+  utc_iso() { date -u -r "$1" +%Y-%m-%dT%H:%M:%SZ; }
+  local_time() {
+    TZ="$DIGEST_TZ" date -r "$(TZ=UTC date -j -f '%Y-%m-%dT%H:%M:%SZ' "$1" +%s)" \
+      '+%Y-%m-%d %H:%M %Z'
+  }
+fi
+
 now="${NOW:-$(date +%s)}"
 since_epoch=$((now - SINCE_HOURS * 3600))
-since="$(date -u -d "@$since_epoch" +%Y-%m-%dT%H:%M:%SZ)"
-local_time() { TZ="$DIGEST_TZ" date -d "$1" '+%Y-%m-%d %H:%M %Z'; }
+since="$(utc_iso "$since_epoch")"
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
