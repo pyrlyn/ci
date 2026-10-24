@@ -20,13 +20,35 @@ name: play
 #         package-name: app.mailune
 #         track: internal
 #       secrets: inherit
+#
+# A bundle built by an earlier job of the same run is an artifact, not a file in
+# this checkout. Set `aab-artifact` to that name. `self-signed: true` means the
+# upload key is self-signed, so the check is `jarsigner -verify` without `-strict`.
 on:
   workflow_call:
     inputs:
       aab:
-        description: Signed Android App Bundle, relative to the repository root.
+        description: >-
+          Signed Android App Bundle, relative to the repository root.
+          With aab-artifact, the file name inside that artifact (optional when
+          the artifact contains one .aab).
         type: string
-        required: true
+        required: false
+        default: ""
+      aab-artifact:
+        description: >-
+          Artifact from an earlier job of this run that holds the signed bundle.
+          When set, the bundle is taken from the artifact, not from the checkout.
+        type: string
+        required: false
+        default: ""
+      self-signed:
+        description: >-
+          The upload key is self-signed. jarsigner -verify then omits -strict,
+          which rejects that key. Leave false for a Play-signed bundle.
+        type: boolean
+        required: false
+        default: false
       package-name:
         description: Android application id.
         type: string
@@ -97,20 +119,26 @@ jobs:
               ;;
           esac
 
+      - name: Fetch the pre-built bundle
+        if: inputs.aab-artifact != '' && steps.gate.outputs.allow == 'true'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ inputs.aab-artifact }}
+          path: ${{ runner.temp }}/aab-artifact
+
       # An App Bundle is a signed jar. An unsigned file is not uploaded.
       - name: Check the bundle is signed
+        id: bundle
         if: steps.gate.outputs.allow == 'true'
         env:
           AAB: ${{ inputs.aab }}
+          AAB_ARTIFACT: ${{ inputs.aab-artifact }}
+          SELF_SIGNED: ${{ inputs.self-signed }}
           PACKAGE_NAME: ${{ inputs.package-name }}
           TRACK: ${{ inputs.track }}
           STATUS: ${{ inputs.status }}
         run: |
           set -euo pipefail
-          case "$AAB" in
-            /*|*..*) echo "aab must be a relative path" >&2; exit 1 ;;
-          esac
-          [ -f "$AAB" ] || { echo "no bundle at $AAB" >&2; exit 1; }
           [[ "$PACKAGE_NAME" =~ ^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$ ]] \
             || { echo "package-name is not an application id" >&2; exit 1; }
           case "$TRACK" in
@@ -121,7 +149,47 @@ jobs:
             completed|draft|inProgress|halted) ;;
             *) echo "status is not a Play release status" >&2; exit 1 ;;
           esac
-          jarsigner -verify -strict "$AAB"
+          if [ -n "$AAB_ARTIFACT" ]; then
+            dir="$RUNNER_TEMP/aab-artifact"
+            [ -d "$dir" ] || { echo "pre-built bundle was not downloaded" >&2; exit 1; }
+            if [ -n "$AAB" ]; then
+              name="${AAB##*/}"
+              case "$name" in
+                ""|.*|*'..'*|*'/'*|*'?'*|*'['*|*'*'*)
+                  echo "aab file name is not valid" >&2
+                  exit 1
+                  ;;
+              esac
+            else
+              name='*.aab'
+            fi
+            match=""
+            count=0
+            while IFS= read -r f; do
+              match="$f"
+              count=$((count + 1))
+            done < <(find "$dir" -type f -name "$name")
+            if [ -n "$AAB" ]; then
+              [ "$count" -eq 1 ] || { echo "aab-artifact has $count files named $name" >&2; exit 1; }
+            else
+              [ "$count" -eq 1 ] || { echo "aab-artifact must contain exactly one .aab (found $count)" >&2; exit 1; }
+            fi
+            cp "$match" prebuilt-bundle.aab
+            AAB="prebuilt-bundle.aab"
+          else
+            [ -n "$AAB" ] || { echo "set aab or aab-artifact" >&2; exit 1; }
+            case "$AAB" in
+              /*|*..*) echo "aab must be a relative path" >&2; exit 1 ;;
+            esac
+            [ -f "$AAB" ] || { echo "no bundle at $AAB" >&2; exit 1; }
+          fi
+          echo "aab=$AAB" >> "$GITHUB_OUTPUT"
+          # -strict rejects a self-signed upload key. Play-signed bundles keep it.
+          if [ "$SELF_SIGNED" = "true" ]; then
+            jarsigner -verify "$AAB"
+          else
+            jarsigner -verify -strict "$AAB"
+          fi
 
       - name: Upload to Play
         if: >-
@@ -132,7 +200,7 @@ jobs:
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: ${{ inputs.package-name }}
-          releaseFiles: ${{ inputs.aab }}
+          releaseFiles: ${{ steps.bundle.outputs.aab }}
           track: ${{ inputs.track }}
           status: ${{ inputs.status }}
           changesNotSentForReview: ${{ inputs.changes-not-sent-for-review }}

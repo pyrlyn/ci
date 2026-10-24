@@ -1096,7 +1096,8 @@ jobs:
 
 | Input | Default |
 | --- | --- |
-| `layout` (required) | directory with `AppxManifest.xml` at its root, relative to the repository |
+| `layout` | directory with `AppxManifest.xml` at its root, relative to the repository. Ignored when `layout-artifact` is set |
+| `layout-artifact` | `""` (artifact from an earlier job: unpacked layout or one `.msix`; the checkout is not the project) |
 | `output` | `app.msix` (a file name, not a path) |
 | `build-command` | `""` (bash in `working-directory` that produces the layout) |
 | `working-directory` | `.` |
@@ -1108,7 +1109,9 @@ jobs:
 Secrets: `WINDOWS_CERTIFICATE` (base64 `.pfx`) and `WINDOWS_CERTIFICATE_PWD`. The job checks
 them, optionally installs the SDK and runs `build-command`, packs with the newest x64
 `makeappx` from the Windows SDK, signs with `signtool` (SHA256, Microsoft timestamp), verifies
-with `signtool verify /pa`, and uploads the MSIX as an artifact named after `output`. The
+with `signtool verify /pa`, and uploads the MSIX as an artifact named after `output`. When
+`layout-artifact` is set, that artifact is the layout (or one already packed `.msix`, which is
+signed and not packed) and `build-command` and `dotnet-version` are skipped. The
 `.pfx` is deleted before the step ends, including when signing fails. The password is not
 printed. Output: `package` (the file name).
 
@@ -1192,7 +1195,11 @@ ends, even after a failure. The key bytes are not printed.
 
 Uploads one signed Android App Bundle to Google Play. The caller signs the bundle. This
 workflow checks the JAR signature with `jarsigner -verify -strict` and then uploads with
-`r0adkll/upload-google-play` (pinned). The service-account JSON is a secret and is not printed.
+`r0adkll/upload-google-play` (pinned). `self-signed: true` (a self-signed upload key) runs
+`jarsigner -verify` without `-strict`, which would reject that key. A Play-signed bundle leaves
+`self-signed` false and keeps `-strict`. The service-account JSON is a secret and is not printed.
+`aab-artifact` is a bundle uploaded by an earlier job of the same run; the checkout is not
+expected to contain it.
 
 A pull request does not upload. `pull_request` and `pull_request_target` skip the check and
 the upload.
@@ -1213,7 +1220,9 @@ jobs:
 
 | Input | Default |
 | --- | --- |
-| `aab` (required) | path of the signed bundle, relative to the repository |
+| `aab` | path of the signed bundle, relative to the repository. With `aab-artifact`, optional file name inside it |
+| `aab-artifact` | `""` (artifact from an earlier job; the bundle is not read from the checkout) |
+| `self-signed` | `false` (`true`: the upload key is self-signed, so `-strict` is omitted) |
 | `package-name` (required) | Android application id |
 | `track` | `internal` (`alpha`, `beta`, `production`) |
 | `status` | `completed` (`draft`, `inProgress`, `halted`) |
