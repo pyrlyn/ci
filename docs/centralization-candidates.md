@@ -8,20 +8,20 @@ ketch-registry and listepo have no `.github/` at all. There is no `listepo/.gith
 
 ## Stacks
 
-- **rtok**: Rust (+ Go site, JS/Python plugins, Slint wasm), cargo-dist. Workflows: bump, ci,
+- **The token-reduction CLI**: Rust (+ Go site, JS/Python plugins, Slint wasm), cargo-dist. Workflows: bump, ci,
   codeql, dependabot, docs, marketplace, pipeline, release, release-plz, semgrep, snyk,
   sonarcloud, sync-docs, verify.
-- **ketch**: Rust (+ JS/Python), cargo-dist. Workflows: bump, ci, codeql, dependabot, pages,
+- **The package manager**: Rust (+ JS/Python), cargo-dist. Workflows: bump, ci, codeql, dependabot, pages,
   release, release-plz, sonarcloud, sync-docs, tap, verify.
-- **cox**: Rust, cargo-dist. Workflows: ci, dependabot, deploy-pages, nightly, release,
+- **The coding agent**: Rust, cargo-dist. Workflows: ci, dependabot, deploy-pages, nightly, release,
   release-plz, sonarcloud, sync-docs.
-- **swarfr**: Rust, cargo-dist. Workflows: bump, ci, release, release-plz, verify.
-- **runa**: Rust (+ C), cargo-dist 0.33. Workflows: ci, pages, perf, release, release-manual,
+- **The build-cache cleaner**: Rust, cargo-dist. Workflows: bump, ci, release, release-plz, verify.
+- **The local model runner**: Rust (+ C), cargo-dist 0.33. Workflows: ci, pages, perf, release, release-manual,
   release-variants, review, sonarcloud.
 - **crates**: Rust crates (crates.io). Workflows: ci, release, release-plz, sonarcloud.
 - **slint_dart**: Dart/Flutter + Rust. Workflows: ci, pages, publish (pub.dev), sonarcloud.
-- **bindsmith**: Dart (+ C/Java/JS). Workflows: ci, pages, release, release-manual, review.
-- **stator**: TypeScript (+ C). Workflows: ci, nightly, pages, sonarcloud.
+- **The bindings generator**: Dart (+ C/Java/JS). Workflows: ci, pages, release, release-manual, review.
+- **The TypeScript compiler**: TypeScript (+ C). Workflows: ci, nightly, pages, sonarcloud.
 - **cross-code**: C/TypeScript/Rust (Nx). Workflows: ci, code-review (DeepSeek).
 - **landing**: static site. Workflows: pages.
 - **infra**: shared workflows. Workflows: ci-rust, lint (+ self-test in PR #1).
@@ -30,106 +30,106 @@ ketch-registry and listepo have no `.github/` at all. There is no `listepo/.gith
 
 ### CodeQL
 
-- Where: rtok, ketch (main); 8 CodeQL PRs; 9 pipeline PRs
-- Similarity: pipeline-PR copies differ from rtok only in the `language:` list (2 lines); standalone
+- Where: the token-reduction CLI, the package manager (main); 8 CodeQL PRs; 9 pipeline PRs
+- Similarity: pipeline-PR copies differ from the token-reduction CLI only in the `language:` list (2 lines); standalone
   CodeQL PRs differ by triggers + unpinned `@v4` (17-19 lines)
 - Recommendation: reusable `codeql.yml` (done)
 
 ### Semgrep
 
-- Where: rtok (main); 10 PRs
-- Similarity: pipeline copies identical to rtok (0 lines); standalone PRs differ only in
+- Where: the token-reduction CLI (main); 10 PRs
+- Similarity: pipeline copies identical to the token-reduction CLI (0 lines); standalone PRs differ only in
   triggers/concurrency (11 lines)
 - Recommendation: reusable `semgrep.yml` (done)
 
 ### Snyk
 
-- Where: rtok (main); 9 pipeline PRs
-- Similarity: all identical to rtok except the ecosystem comment (0 lines)
+- Where: the token-reduction CLI (main); 9 pipeline PRs
+- Similarity: all identical to the token-reduction CLI except the ecosystem comment (0 lines)
 - Recommendation: reusable `snyk.yml` (done)
 
 ### Gated pipeline
 
-- Where: rtok (main); 9 PRs
+- Where: the token-reduction CLI (main); 9 PRs
 - Similarity: 1-5 lines: only `ci` job permissions and one extra secret (cross-code `CODECOV_TOKEN`)
 - Recommendation: reusable `pipeline.yml` + `gate` action (done)
 
 ### Rust CI (fmt/clippy/test)
 
-- Where: rtok, ketch, cox, swarfr, runa, crates, slint_dart
+- Where: the token-reduction CLI, the package manager, the coding agent, the build-cache cleaner, the local model runner, crates, slint_dart
 - Similarity: ci.yml differs 145-541 lines between repos (just recipes, extra jobs); infra
-  `ci-rust.yml` already has callers in cox#57, ketch#151
+  `ci-rust.yml` already has callers in the coding agent#57, the package manager#151
 - Recommendation: reusable `ci-rust.yml` for the common part; repo-specific jobs stay local
 
 ### release-plz
 
-- Where: rtok, swarfr, ketch, cox, crates
-- Similarity: swarfr vs rtok 2 lines; ketch 52, cox/crates 63-76 (older variant: token
+- Where: the token-reduction CLI, the build-cache cleaner, the package manager, the coding agent, crates
+- Similarity: the build-cache cleaner vs the token-reduction CLI 2 lines; the package manager 52, cox/crates 63-76 (older variant: token
   check + "release in flight" check, no verify/dispatch)
 - Recommendation: reusable `release-plz.yml` (done)
 
 ### bump + verify
 
-- Where: rtok, swarfr, ketch
-- Similarity: bump.yml swarfr vs rtok 2 lines, ketch 11; verify.yml 21-38 (different `just`
+- Where: the token-reduction CLI, the build-cache cleaner, the package manager
+- Similarity: bump.yml the build-cache cleaner vs the token-reduction CLI 2 lines, the package manager 11; verify.yml 21-38 (different `just`
   recipes)
 - Recommendation: verify is covered by `verify-command` in release-plz/release; bump stays local
   until `tools/release.sh` is generic (question)
 
 ### cargo-dist release.yml
 
-- Where: rtok, ketch, swarfr, runa, cox, crates
-- Similarity: generated by dist; swarfr vs rtok 43 lines, others 170-590
+- Where: the token-reduction CLI, the package manager, the build-cache cleaner, the local model runner, the coding agent, crates
+- Similarity: generated by dist; the build-cache cleaner vs the token-reduction CLI 43 lines, others 170-590
 - Recommendation: keep local (dist regenerates and checks it); share `dist-workspace.toml`
   conventions in docs
 
 ### Non-dist manual release
 
-- Where: bindsmith, runa (release-manual)
+- Where: the bindings generator, the local model runner (release-manual)
 - Similarity: Dart/bump-script specific
 - Recommendation: reusable `release.yml` (done) as the template; migrate case by case
 
 ### macOS signing / notarization
 
-- Where: rtok, swarfr, ketch (`build-setup.yml` + dist), cox
-- Similarity: build-setup.yml swarfr vs rtok 32 lines, ketch 18
+- Where: the token-reduction CLI, the build-cache cleaner, the package manager (`build-setup.yml` + dist), the coding agent
+- Similarity: build-setup.yml the build-cache cleaner vs the token-reduction CLI 32 lines, the package manager 18
 - Recommendation: composite action `macos-sign` (done); `release.yml` uses it
 
 ### Dependabot auto-merge workflow
 
-- Where: rtok, ketch, cox (`dependabot.yml` workflow)
+- Where: the token-reduction CLI, the package manager, the coding agent (`dependabot.yml` workflow)
 - Similarity: 16-33 lines apart (ci job permissions, pipeline wait)
 - Recommendation: reusable `dependabot-automerge.yml` (done)
 
 ### revert-on-failure job
 
-- Where: rtok, bindsmith, cox, runa, slint_dart, stator
+- Where: the token-reduction CLI, the bindings generator, the coding agent, the local model runner, slint_dart, the TypeScript compiler
 - Similarity: two generations: stator/runa/slint_dart/bindsmith/cox differ 6-15 lines (mostly
-  `needs:`); rtok adds the re-apply PR (34-39 lines more)
+  `needs:`); the token-reduction CLI adds the re-apply PR (34-39 lines more)
 - Recommendation: composite action `revert-on-failure` (done)
 
 ### SonarCloud
 
-- Where: rtok, ketch, cox, runa, crates, slint_dart, stator
+- Where: the token-reduction CLI, the package manager, the coding agent, the local model runner, crates, slint_dart, the TypeScript compiler
 - Similarity: ketch/cox/runa/crates 8-12 lines apart (Rust setup, llvm-cov args);
   slint_dart/stator 23-63
 - Recommendation: reusable `sonarcloud.yml` (done; public repositories only)
 
 ### sync-docs
 
-- Where: rtok, ketch, cox
+- Where: the token-reduction CLI, the package manager, the coding agent
 - Similarity: byte-identical after comments (0 lines)
 - Recommendation: could be centralized, but left untouched on request; mention only
 
 ### Pages
 
-- Where: ketch, bindsmith, landing, runa, slint_dart, stator
+- Where: the package manager, the bindings generator, landing, the local model runner, slint_dart, the TypeScript compiler
 - Similarity: 80-106 lines apart (different generators)
 - Recommendation: keep local
 
 ### Dependabot config (`.github/dependabot.yml`)
 
-- Where: rtok, ketch, cox, bindsmith, slint_dart, stator; PRs for 6 more
+- Where: the token-reduction CLI, the package manager, the coding agent, the bindings generator, slint_dart, the TypeScript compiler; PRs for 6 more
 - Similarity: 42-60 lines apart (different ecosystems/dirs)
 - Recommendation: cannot be centralized (read only from the repo); keep a template in infra docs
 
@@ -141,7 +141,7 @@ ketch-registry and listepo have no `.github/` at all. There is no `listepo/.gith
 
 ### Issue / PR templates
 
-- Where: bindsmith only (ISSUE_TEMPLATE); no PR templates
+- Where: the bindings generator only (ISSUE_TEMPLATE); no PR templates
 - Similarity: n/a
 - Recommendation: create a public `listepo/.github` repo for default community health files
   (question)
@@ -154,32 +154,32 @@ ketch-registry and listepo have no `.github/` at all. There is no `listepo/.gith
 
 ### Tool install
 
-- Where: mise in rtok, ketch, swarfr, runa, bindsmith, infra; `dtolnay/rust-toolchain` in cox,
-  crates, runa, slint_dart
+- Where: mise in the token-reduction CLI, the package manager, the build-cache cleaner, the local model runner, the bindings generator, infra; `dtolnay/rust-toolchain` in the coding agent,
+  crates, the local model runner, slint_dart
 - Similarity: mixed
 - Recommendation: standardize on `jdx/mise-action` via ci-rust.yml
 
 ### Local composite actions
 
-- Where: cox `bwrap`, ketch `rust`, stator `setup`
+- Where: the coding agent `bwrap`, the package manager `rust`, the TypeScript compiler `setup`
 - Similarity: repo-specific
 - Recommendation: keep local
 
 ### Action pinning
 
-- Where: pinned vs unpinned `uses:` on main: rtok 34/32, ketch 12/38, runa 5/52, bindsmith 0/28,
+- Where: pinned vs unpinned `uses:` on main: the token-reduction CLI 34/32, the package manager 12/38, the local model runner 5/52, the bindings generator 0/28,
   cross-code 0/35
 - Similarity: inconsistent
 - Recommendation: reusable workflows are fully SHA-pinned; callers pin infra by SHA
 
 ### Homebrew tap publish
 
-- Where: ketch `tap.yml` (dist custom publish job), rtok/swarfr via dist homebrew installer
+- Where: the package manager `tap.yml` (dist custom publish job), the token-reduction CLI and the build-cache cleaner via dist homebrew installer
 - Similarity: different mechanisms
 - Recommendation: later: reusable `homebrew-tap.yml` writing to pyrlyn/homebrew-tap
 
 ### crates.io publish
 
-- Where: crates (release-plz), rtok (paused)
+- Where: crates (release-plz), the token-reduction CLI (paused)
 
 - Recommendation: `release.yml` `publish-crates` input

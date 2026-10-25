@@ -39,4 +39,4 @@ jobs:
       contents: write
       pull-requests: write
     with:
-      reapply-pr: false # cox's current (older) behaviour; true = rtok's re-apply PR
+      reapply-pr: false # The coding agent's current (older) behaviour; true = the token-reduction CLI's re-apply PR
