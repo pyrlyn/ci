@@ -12,7 +12,7 @@ import SnapshotTesting
 import Testing
 
 enum SnapshotVersion {
-  /// The one per-repository edit: `COX` reads COX_SNAPSHOT_VERSION and COX_SNAPSHOT_RECORD.
+  /// The one per-repository edit: `COX` reads AGENT_SNAPSHOT_VERSION and AGENT_SNAPSHOT_RECORD.
   static let envPrefix = "COX"
 
   static let key: String = {

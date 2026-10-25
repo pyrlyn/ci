@@ -1,7 +1,7 @@
 # pyrlyn/ci
 
 Shared reusable GitHub workflows and build configs for pyrlyn repositories
-(rtok, ketch, stator, bindsmith, runa, cox).
+(the token CLI, the package manager, stator, bindsmith, runa, the coding agent).
 
 ## Reusable workflows
 
@@ -73,7 +73,7 @@ the GitHub constraints (with sources) that shape this repository.
 [docs/ru/plans/](docs/ru/plans/) and [docs/uk/plans/](docs/uk/plans/)):
 [license-scanning.md](docs/plans/license-scanning.md) (dependency license scanning, paused)
 and [licensing-cla-empryo.md](docs/plans/licensing-cla-empryo.md) (dual licensing, CLA and
-Empryo ideas for rtok/cox).
+Empryo ideas for the token CLI/cox).
 
 ## License
 

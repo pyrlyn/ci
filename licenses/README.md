@@ -10,7 +10,7 @@ pyrlyn repository:
 | [`readme-snippet.md`](readme-snippet.md) | Line kept in each target README between `<!-- license-sync:start -->` and `<!-- license-sync:end -->`; `{commercial}` becomes the link to that repository's commercial file |
 | [`targets.yml`](targets.yml) | Target repositories and the path of each file there |
 
-Only GPL repositories (GPL-3.0-or-later) are targets: cox, rtok, ketch and runa get both
+Only GPL repositories (GPL-3.0-or-later) are targets: the coding agent, the token CLI, the package manager and runa get both
 files and the README line; crates is GPL only (`commercial: null`, `readme: null`). `tools/license-kit` decides from the default branch: a
 license file that reads as the GNU GPL and no root `Cargo.toml` / `package.json` license
 expression without GPL. A repository whose `LICENSE` is GPL but whose manifest says e.g.

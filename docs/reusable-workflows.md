@@ -903,18 +903,18 @@ suffix; `draft` keeps it a draft)
 -> `publish` (`publish-crates` with `CARGO_REGISTRY_TOKEN`, and/or `publish-command` with
 `PUBLISH_TOKEN`, archives in `./dist`). `dry-run: true` stops after `build`.
 
-Repositories built with cargo-dist (rtok, ketch, swarfr, runa) keep dist's generated
+Repositories built with cargo-dist (the token CLI, the package manager, swarfr, runa) keep dist's generated
 `release.yml`: dist regenerates it and fails `dist plan` on a hand-edited copy. Their
 dist-workspace.toml sets `dispatch-releases = true` and `create-release = false`, so the
 workflow bump dispatches uploads to bump's draft Release and undrafts it, and never tags.
 
 What stays in each repository: the thin callers above, `.github/dependabot.yml` (GitHub reads
-it only from the repository itself), repository-specific jobs (e.g. rtok's webui/wasm checks,
+it only from the repository itself), repository-specific jobs (e.g. The token CLI's webui/wasm checks,
 plugin-version checks, revert-on-failure), cargo-dist's `release.yml` and `build-setup.yml`.
 
 ## release-apple-desktop.yml
 
-Production release of a macOS desktop app; the job ketch's `desktop-release.yml` used to run,
+Production release of a macOS desktop app; the job the package manager's `desktop-release.yml` used to run,
 with the app-specific parts turned into inputs. Never call it for test builds: CI and local
 builds stay unsigned or ad-hoc signed and need none of its secrets. The caller owns a
 dispatch-only trigger (the workflow creates the tag itself, so a tag or release trigger would
@@ -942,9 +942,9 @@ jobs:
       version: ${{ inputs.version }}
       prerelease: false # required: this repository's decision
       working-directory: desktop/macos
-      project: Ketch.xcodeproj
-      scheme: Ketch
-      app-name: Ketch
+      project: the package manager.xcodeproj
+      scheme: the package manager
+      app-name: the package manager
       export-options: desktop/macos/ExportOptions.plist
       info-plist: desktop/macos/Ketch/Info.plist
       minimum-system-version: "26.0"
@@ -1233,7 +1233,7 @@ jobs:
 
 ## dependabot-automerge.yml
 
-Unifies rtok/ketch/cox. The caller runs its CI and passes the result. Only Dependabot's own
+Unifies the token CLI/pkgmgr/cox. The caller runs its CI and passes the result. Only Dependabot's own
 PRs from a branch of the repository are touched. Update types listed in
 `allowed-update-types` are merged with `gh pr merge --<merge-method> --match-head-commit`
 (never `--admin`, never `--auto`); others get `review-label`, and a major update is assigned
@@ -1287,7 +1287,7 @@ token needs `pull-requests: write`.
 
 ## sonarcloud.yml
 
-Unifies the sonarcloud.yml of rtok, ketch, cox, runa, crates, slint_dart and stator.
+Unifies the sonarcloud.yml of the token CLI, the package manager, the coding agent, runa, crates, slint_dart and stator.
 Every step skips with a notice when `SONAR_TOKEN` is empty; coverage and scan are soft-fail
 unless `soft-fail: false`.
 
@@ -1321,9 +1321,9 @@ jobs:
 
 ## revert-on-failure (composite action)
 
-Unifies both generations found in six repositories: the older one (bindsmith, cox, runa,
+Unifies both generations found in six repositories: the older one (bindsmith, the coding agent, runa,
 slint_dart, stator: skip new branches, missing bases, bot commits, earlier auto-reverts and
-pushes touching `.github/`) and rtok's (adds the draft re-apply PR).
+pushes touching `.github/`) and the token CLI's (adds the draft re-apply PR).
 
 Inputs: `before` (`github.event.before`), `after` (`github.sha`), `branch`
 (`github.ref_name`), `reapply-pr` (`true`), `skip-workflow-changes` (`true`), `dry-run`
@@ -1348,8 +1348,8 @@ requests").
 
 ## macos-sign (composite action)
 
-Extracted from rtok/swarfr/ketch `build-setup.yml` (identity discovery for cargo-dist) and
-ketch `build-check.yml` (notarization). A no-op on non-macOS runners. Every credential is
+Extracted from the token CLI/swarfr/ketch `build-setup.yml` (identity discovery for cargo-dist) and
+The package manager `build-check.yml` (notarization). A no-op on non-macOS runners. Every credential is
 optional: missing ones skip with a notice unless `require: "true"`.
 
 | Input | Notes |

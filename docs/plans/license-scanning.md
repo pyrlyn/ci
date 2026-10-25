@@ -25,7 +25,7 @@ Should a GPL dependency:
 
 ## Licensing context
 
-`rtok` and `cox` ship under **GPL-3.0 plus a paid commercial license** (see their `PRICING.md`). A GPL dependency would break the commercial license, so the usual policy is the opposite of "allow GPL": block GPL, allow permissive licenses.
+the token CLI and the coding agent ship under **GPL-3.0 plus a paid commercial license** (see their `PRICING.md`). A GPL dependency would break the commercial license, so the usual policy is the opposite of "allow GPL": block GPL, allow permissive licenses.
 
 ## Suggested approach
 

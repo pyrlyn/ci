@@ -5,7 +5,7 @@ If an AGENTS.md or CLAUDE.md exists higher in the tree, follow it too; on confli
 ## What this repo is
 
 Shared, SHA-pinned reusable GitHub Actions workflows for the other repositories
-(rtok, ketch, stator, bindsmith, runa, cox). This checkout's `origin` is
+(the token CLI, the package manager, stator, bindsmith, runa, the coding agent). This checkout's `origin` is
 `git@github.com:pyrlyn/ci.git`.
 
 | Workflow | Role |
