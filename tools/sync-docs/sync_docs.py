@@ -28,7 +28,7 @@ def ci_glob(pattern: str) -> str:
 
 # Service pages stay in the source repository; names match case-insensitively.
 # AGENTS.md (agent instructions) only in this exact spelling: a user-facing agents.md is a
-# different page (the token CLI documents agent integrations there).
+# different page (rtok documents agent integrations there).
 INTERNAL = [
     ci_glob(p)
     for p in (

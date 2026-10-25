@@ -1,9 +1,9 @@
-# .github/infra.yml — the coding agent (main). Everything ci.yml, pipeline.yml and sonarcloud.yml did.
+# .github/infra.yml — cox (main). Everything ci.yml, pipeline.yml and sonarcloud.yml did.
 version: 1
 
 rust:
   enabled: true
-  # The shared matrix minus Windows: the coding agent is Unix-only.
+  # The shared matrix minus Windows: cox is Unix-only.
   matrix:
     - {os: ubuntu-latest, target: x86_64-unknown-linux-gnu}
     - {os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu}

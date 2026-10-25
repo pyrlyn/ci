@@ -1,4 +1,4 @@
-# .github/infra.yml — the package manager.
+# .github/infra.yml — ketch.
 version: 1
 
 rust:

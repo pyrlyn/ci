@@ -1,4 +1,4 @@
-# .github/workflows/sync-docs.yml — identical in the coding agent, the package manager, the token CLI.
+# .github/workflows/sync-docs.yml — identical in cox, ketch, rtok.
 name: sync-docs
 
 on:

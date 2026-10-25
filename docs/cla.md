@@ -136,9 +136,9 @@ The check uses two tokens:
 
 ```sh
 gh secret set CLA_APP_ID --org pyrlyn --visibility selected \
-  --repos the coding agent,the token CLI,the package manager,runa,crates,infra
+  --repos cox,rtok,ketch,runa,crates,infra
 gh secret set CLA_APP_PRIVATE_KEY --org pyrlyn --visibility selected \
-  --repos the coding agent,the token CLI,the package manager,runa,crates,infra < pyrlyn-cla.private-key.pem
+  --repos cox,rtok,ketch,runa,crates,infra < pyrlyn-cla.private-key.pem
 ```
 
 Instead of the app, a fine-grained PAT (resource owner `pyrlyn`, repository `cla-signatures`,

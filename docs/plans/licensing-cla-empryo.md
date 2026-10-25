@@ -1,6 +1,6 @@
-# Plan: dual licensing, CLA and Empryo ideas for the token CLI/cox
+# Plan: dual licensing, CLA and Empryo ideas for rtok/cox
 
-Plan for the token CLI and the coding agent: licensing, CLA and ideas from Empryo. Drafted 2026-10-02; statuses are updated as work progresses. PR links will be added once the PRs are opened.
+Plan for rtok and cox: licensing, CLA and ideas from Empryo. Drafted 2026-10-02; statuses are updated as work progresses. PR links will be added once the PRs are opened.
 
 ## 1. Dual license and license file sync — 🟡 in progress
 
@@ -25,7 +25,7 @@ Plan for the token CLI and the coding agent: licensing, CLA and ideas from Empry
 - [ ] Signing via the CLA Assistant Lite GitHub Action (`contributor-assistant/github-action`): a reusable workflow in infra and a caller workflow in GPL repositories. The GitHub account serves as the signature; an unsigned PR is flagged. Bots are allowlisted.
 - [ ] Manual, Ivan: create a secret with a token, choose where signatures are stored (a branch in infra or a separate repository) and make the CLA check required via rulesets. Instructions will be in `docs/cla.md` in infra.
 
-## 4. Ideas from Empryo for the token CLI and the coding agent — 🟢 research done, 🟡 detailed design in progress, ⚪ implementation not started
+## 4. Ideas from Empryo for rtok and cox — 🟢 research done, 🟡 detailed design in progress, ⚪ implementation not started
 
 Empryo (proxysoul/Empryo) is distributed under **BSL 1.1**, so its code must not be copied. We take only the ideas and rewrite them in Rust from scratch.
 
@@ -45,23 +45,23 @@ Empryo (proxysoul/Empryo) is distributed under **BSL 1.1**, so its code must not
 13. Robust edits: fuzzy whitespace, hash guard, undo stack.
 14. Command output compression that preserves stack traces.
 
-### Tasks for the token CLI (⚪ to do)
+### Tasks for rtok (⚪ to do)
 1. Repository map by PageRank between files and the `(→N)` label. Do not persist personalized scores (see Empryo #228). Size M.
 2. IDF and edge confidence in `callers`, `impact` and `explore`. Size S–M.
 3. Co-change table for the map, `impact`, `affected` and memory. Size M.
 4. Answer grep from the symbol index instead of a full block in the guard. Size S–M.
 5. Linking memory notes to files (`note_files`) and two new RRF signals. Size S–M.
 6. Trigram prefilter for `read search`, with a check that it actually wins. Size M.
-7. `the token CLI graph dupes` on MinHash and linking tests to code by file names. Size M.
+7. `rtok graph dupes` on MinHash and linking tests to code by file names. Size M.
 
-### Tasks for the coding agent (⚪ to do)
-1. Repository map by graph and PageRank instead of sorting by recency, personalized by git only. Possibly a crate shared with the token CLI. Size L/M.
+### Tasks for cox (⚪ to do)
+1. Repository map by graph and PageRank instead of sorting by recency, personalized by git only. Possibly a crate shared with rtok. Size L/M.
 2. Compaction without a model call for the "files" and "errors" sections. Size M.
 3. Diagnostics delta in the output of `edit` and `write`. Size M.
 4. Navigation via LSP and `rename_symbol`. Size L.
 5. A `check` tool: tests, build, linter. Size M.
 6. `read` and `edit` by symbol. Size M.
-7. Collapsing repeats in output via the token CLI's `cmd` rules. Size S.
+7. Collapsing repeats in output via rtok's `cmd` rules. Size S.
 
 Detailed design is under way now: where each task fits in the code, how to do it in Rust, acceptance criteria and what to take first. The result will be added here.
 
@@ -69,5 +69,5 @@ Detailed design is under way now: where each task fits in the code, how to do it
 
 - Original request: actively check only GPL, skip MIT and Apache.
 - Open question: fail CI on a GPL dependency or only show it in the report?
-- ⚠️ A GPL dependency breaks the commercial license of the token CLI and the coding agent.
+- ⚠️ A GPL dependency breaks the commercial license of rtok and cox.
 - Proposal: `cargo-deny` in infra. Leave MIT and Apache alone, show GPL in the report and fail CI on it.

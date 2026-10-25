@@ -4,14 +4,14 @@ Repositories with Actions enabled that call pyrlyn/ci, and the infra commit they
 
 | Repository | Workflow -> infra workflow | Pin | Caller permissions |
 | --- | --- | --- | --- |
-| the coding agent (main, PR #65 p37-desktop) | ci.yml `rust` -> ci-rust.yml | `189816a` | none on the job (workflow `contents: read`) |
-| the coding agent | pipeline.yml -> pipeline.yml (`rust: false`) | `189816a` | `contents: read`, `security-events: write`, `actions: read` |
-| the coding agent | release-plz.yml -> release-plz.yml | `189816a` | `contents: write`, `pull-requests: write`, `actions: write` |
-| the package manager | ci.yml `rust` -> ci-rust.yml | `059c0c5` | none on the job (workflow `contents: read`) |
-| the package manager | pipeline.yml -> pipeline.yml | `189816a` | `contents: read`, `security-events: write`, `actions: read` |
-| the package manager | release-apple-desktop.yml -> release-apple-desktop.yml | ci/release-apple-desktop head (repin to the merge commit) | `contents: write`, `actions: read`, `issues: write` |
-| the token CLI | pipeline.yml -> pipeline.yml + `gate` action | `189816a` | `contents: read`, `security-events: write`, `actions: read` |
-| the token CLI | release-plz.yml -> release-plz.yml | `189816a` | `contents: write`, `pull-requests: write`, `actions: write` |
+| cox (main, PR #65 p37-desktop) | ci.yml `rust` -> ci-rust.yml | `189816a` | none on the job (workflow `contents: read`) |
+| cox | pipeline.yml -> pipeline.yml (`rust: false`) | `189816a` | `contents: read`, `security-events: write`, `actions: read` |
+| cox | release-plz.yml -> release-plz.yml | `189816a` | `contents: write`, `pull-requests: write`, `actions: write` |
+| ketch | ci.yml `rust` -> ci-rust.yml | `059c0c5` | none on the job (workflow `contents: read`) |
+| ketch | pipeline.yml -> pipeline.yml | `189816a` | `contents: read`, `security-events: write`, `actions: read` |
+| ketch | release-apple-desktop.yml -> release-apple-desktop.yml | ci/release-apple-desktop head (repin to the merge commit) | `contents: write`, `actions: read`, `issues: write` |
+| rtok | pipeline.yml -> pipeline.yml + `gate` action | `189816a` | `contents: read`, `security-events: write`, `actions: read` |
+| rtok | release-plz.yml -> release-plz.yml | `189816a` | `contents: write`, `pull-requests: write`, `actions: write` |
 
 Actions disabled (not consumers today): bindsmith, crates, cross-code, swarfr, runa,
 slint_dart, stator; private airtalk-cli, budget-app, riverpod, slint-dotnet. landing (Pages only)
@@ -23,10 +23,10 @@ Every workflow except dependabot-automerge.yml now declares `actions: write`, an
 a nested job that asks for more than its caller grants, even when `cancel-run-on-failure` is
 false. Before moving a pin past 416dbf9, change the calling job's permissions:
 
-- ci-rust.yml callers (the coding agent, the package manager `rust` jobs): add `permissions: {contents: read, actions: write}`
+- ci-rust.yml callers (cox, ketch `rust` jobs): add `permissions: {contents: read, actions: write}`
   on the job. Where ci.yml is itself called (dependabot.yml `ci` job), that job must grant
   `actions: write` too.
-- pipeline.yml callers (the coding agent, the package manager, the token CLI): `actions: read` -> `actions: write`.
+- pipeline.yml callers (cox, ketch, rtok): `actions: read` -> `actions: write`.
 - release-plz.yml callers already grant `actions: write`.
 
 ## Upgrading a pin past notify-release-failure

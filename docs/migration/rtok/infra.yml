@@ -1,4 +1,4 @@
-# .github/infra.yml — the token CLI. CI is `just` recipes, so ci-rust.yml stays off and the recipes run
+# .github/infra.yml — rtok. CI is `just` recipes, so ci-rust.yml stays off and the recipes run
 # as custom jobs (same commands as today's ci.yml).
 version: 1
 

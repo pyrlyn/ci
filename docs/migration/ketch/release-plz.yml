@@ -1,4 +1,4 @@
-# .github/workflows/release-plz.yml — replaces the package manager's 140-line local variant.
+# .github/workflows/release-plz.yml — replaces ketch's 140-line local variant.
 name: release-plz
 
 on:
