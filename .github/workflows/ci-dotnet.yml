@@ -41,6 +41,15 @@ on:
         type: string
         required: false
         default: "."
+      skip-tests:
+        description: >-
+          Skip only the test-running steps (`dotnet test`); restore and
+          `dotnet build` still run. The Actions variable SKIP_CI_TESTS=true (repository or
+          organization) or a workflow env SKIP_CI_TESTS=true does the same. See
+          docs/skip-ci-tests.md.
+        type: boolean
+        required: false
+        default: false
       test-command:
         description: >-
           Bash that runs the tests. Empty (default) runs `dotnet test` for every solution
@@ -128,10 +137,15 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         env:
           TEST_COMMAND: ${{ inputs.test-command }}
+          SKIP_TESTS: >-
+            ${{ inputs.skip-tests || vars.SKIP_CI_TESTS == 'true' || env.SKIP_CI_TESTS == 'true' }}
         run: |
           set -euo pipefail
           dotnet --info
-          if [ -n "$TEST_COMMAND" ]; then eval "$TEST_COMMAND"; exit 0; fi
+          if [ "$SKIP_TESTS" = true ]; then
+            echo "::notice title=SKIP_CI_TESTS::tests skipped by SKIP_CI_TESTS (build only)"
+          fi
+          if [ -n "$TEST_COMMAND" ] && [ "$SKIP_TESTS" != true ]; then eval "$TEST_COMMAND"; exit 0; fi
           locked=()
           if [ -n "$(git ls-files -- '*packages.lock.json')" ]; then locked=(--locked-mode); fi
           mapfile -t targets < <(git ls-files -- '*.sln' '*.slnx')
@@ -141,7 +155,11 @@ jobs:
           for t in "${targets[@]}"; do
             echo "::group::$t"
             dotnet restore "${locked[@]}" "$t"
-            dotnet test --no-restore "$t"
+            if [ "$SKIP_TESTS" = true ]; then
+              dotnet build --no-restore "$t"
+            else
+              dotnet test --no-restore "$t"
+            fi
             echo "::endgroup::"
           done
 
