@@ -114,6 +114,8 @@ The archive holds one feature set (`nextest-archive-args`, default `--all-target
 
 ## sccache with R2
 
+Full guide: [sccache.md](sccache.md).
+
 `sccache: true` installs sccache (`mozilla-actions/sccache-action`) and sets `RUSTC_WRAPPER`,
 `CARGO_INCREMENTAL=0`, `SCCACHE_REGION=auto` and the R2 settings. Pull requests only read the
 cache (`SCCACHE_S3_RW_MODE=READ_ONLY`). It needs the secrets `R2_ACCESS_KEY_ID` and
