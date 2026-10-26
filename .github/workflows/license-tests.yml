@@ -59,7 +59,11 @@ jobs:
         run: cargo fmt --check
       - name: clippy
         run: cargo clippy --locked --all-targets -- -D warnings
+      - name: tests skipped (SKIP_CI_TESTS)
+        if: vars.SKIP_CI_TESTS == 'true' || env.SKIP_CI_TESTS == 'true'
+        run: echo "::notice title=SKIP_CI_TESTS::tests skipped by SKIP_CI_TESTS"
       - name: Tests
+        if: vars.SKIP_CI_TESTS != 'true' && env.SKIP_CI_TESTS != 'true'
         run: cargo test --locked --no-fail-fast -- --nocapture
       - name: Cancel the run on failure
         if: failure()

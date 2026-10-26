@@ -214,6 +214,15 @@ on:
         type: boolean
         required: false
         default: false
+      skip-tests:
+        description: >-
+          Skip only the test-running steps (test, doctests); builds, clippy, check and the
+          nextest archive still run. The Actions variable SKIP_CI_TESTS=true (repository or
+          organization) or a workflow env SKIP_CI_TESTS=true does the same. See
+          docs/skip-ci-tests.md.
+        type: boolean
+        required: false
+        default: false
       skip:
         description: >-
           Skip the work (not the check names) whatever changed, e.g. on a docs-only pull
@@ -684,15 +693,25 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
+      - name: tests skipped (SKIP_CI_TESTS)
+        if: >-
+          env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != ''
+          && (inputs.skip-tests || vars.SKIP_CI_TESTS == 'true' || env.SKIP_CI_TESTS == 'true')
+        run: echo "::notice title=SKIP_CI_TESTS::tests skipped by SKIP_CI_TESTS"
+
       - name: test
-        if: env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != ''
+        if: >-
+          env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != ''
+          && !inputs.skip-tests && vars.SKIP_CI_TESTS != 'true' && env.SKIP_CI_TESTS != 'true'
         env:
           FEATURE_ARGS: ${{ inputs.feature-args }}
           TEST_COMMAND: ${{ inputs.test-command }}
         run: eval "$TEST_COMMAND"
 
       - name: doctests
-        if: env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != '' && inputs.doc-tests
+        if: >-
+          env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != '' && inputs.doc-tests
+          && !inputs.skip-tests && vars.SKIP_CI_TESTS != 'true' && env.SKIP_CI_TESTS != 'true'
         run: |
           # The step shell runs with -e; keep going after a failure to inspect the log.
           set +e -uo pipefail
@@ -971,15 +990,25 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
+      - name: tests skipped (SKIP_CI_TESTS)
+        if: >-
+          env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != ''
+          && (inputs.skip-tests || vars.SKIP_CI_TESTS == 'true' || env.SKIP_CI_TESTS == 'true')
+        run: echo "::notice title=SKIP_CI_TESTS::tests skipped by SKIP_CI_TESTS"
+
       - name: test
-        if: env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != ''
+        if: >-
+          env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != ''
+          && !inputs.skip-tests && vars.SKIP_CI_TESTS != 'true' && env.SKIP_CI_TESTS != 'true'
         env:
           FEATURE_ARGS: ${{ inputs.feature-args }}
           TEST_COMMAND: ${{ inputs.test-command }}
         run: eval "$TEST_COMMAND"
 
       - name: doctests
-        if: env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != '' && inputs.doc-tests
+        if: >-
+          env.RUN == 'true' && env.NATIVE == 'true' && inputs.test-command != '' && inputs.doc-tests
+          && !inputs.skip-tests && vars.SKIP_CI_TESTS != 'true' && env.SKIP_CI_TESTS != 'true'
         run: |
           # The step shell runs with -e; keep going after a failure to inspect the log.
           set +e -uo pipefail
