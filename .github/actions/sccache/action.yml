@@ -47,7 +47,13 @@ runs:
         fi
         mkdir -p "$dir"
         echo "SCCACHE_DIR=$dir" >> "$GITHUB_ENV"
-        echo "SCCACHE_CACHE_SIZE=${CACHE_SIZE:-${SCCACHE_CACHE_SIZE:-15G}}" >> "$GITHUB_ENV"
+        size="${CACHE_SIZE:-${SCCACHE_CACHE_SIZE:-15G}}"
+        # Only a plain size (e.g. 15G, 500M) reaches $GITHUB_ENV.
+        if ! [[ "$size" =~ ^[0-9]+[KMGT]?$ ]]; then
+          echo "::error::sccache cache-size must look like 15G, got an invalid value"
+          exit 1
+        fi
+        echo "SCCACHE_CACHE_SIZE=$size" >> "$GITHUB_ENV"
 
     - name: sccache configuration
       id: cfg
