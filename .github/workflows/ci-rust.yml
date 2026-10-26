@@ -290,6 +290,19 @@ on:
         type: string
         required: false
         default: ""
+      target-prune-max-total-size:
+        description: >-
+          Run target-prune (crates.io `target-prune`, source pyrlyn/crates rust/target-prune)
+          after the test/build steps: `target-prune prune --apply --max-total-size <value>` on
+          the entry's target dir (CARGO_TARGET_DIR or ./target), e.g. `12G`. Meant for
+          self-hosted runners whose target dir persists between runs. Uses a target-prune
+          already on PATH, else `cargo install --locked target-prune`. Never fails the job
+          (continue-on-error); skipped on Windows (target-prune is Unix only). Empty (default)
+          falls back to the variable TARGET_PRUNE_MAX_TOTAL_SIZE (repo or org); both empty
+          disables it.
+        type: string
+        required: false
+        default: ""
     secrets:
       R2_ACCESS_KEY_ID:
         description: R2 API token Access Key ID for sccache (optional).
@@ -732,6 +745,27 @@ jobs:
           BUILD_COMMAND: ${{ inputs.build-command }}
           FEATURE_ARGS: ${{ inputs.feature-args }}
         run: eval "$BUILD_COMMAND"
+      # Optional disk hygiene for persistent (self-hosted) target dirs; see the input.
+      - name: target-prune
+        if: >-
+          always() && env.RUN == 'true'
+          && (inputs.target-prune-max-total-size != '' || vars.TARGET_PRUNE_MAX_TOTAL_SIZE != '')
+          && runner.os != 'Windows'
+        continue-on-error: true
+        env:
+          TP_MAX_TOTAL: ${{ inputs.target-prune-max-total-size || vars.TARGET_PRUNE_MAX_TOTAL_SIZE }}
+        run: |
+          if ! command -v target-prune >/dev/null 2>&1; then
+            cargo install --locked target-prune
+          fi
+          dir="${CARGO_TARGET_DIR:-target}"
+          if [ -d "$dir" ]; then
+            du -sh "$dir" || true
+            target-prune prune --apply --max-total-size "$TP_MAX_TOTAL" "$dir"
+            du -sh "$dir" || true
+          else
+            echo "no target dir at $dir, nothing to prune"
+          fi
       # A wrapper that never reached sccache (e.g. clobbered by mise [env]) shows as zero
       # compile requests; warn so it is not mistaken for a working cache.
       - name: sccache stats
@@ -1029,6 +1063,27 @@ jobs:
           BUILD_COMMAND: ${{ inputs.build-command }}
           FEATURE_ARGS: ${{ inputs.feature-args }}
         run: eval "$BUILD_COMMAND"
+      # Optional disk hygiene for persistent (self-hosted) target dirs; see the input.
+      - name: target-prune
+        if: >-
+          always() && env.RUN == 'true'
+          && (inputs.target-prune-max-total-size != '' || vars.TARGET_PRUNE_MAX_TOTAL_SIZE != '')
+          && runner.os != 'Windows'
+        continue-on-error: true
+        env:
+          TP_MAX_TOTAL: ${{ inputs.target-prune-max-total-size || vars.TARGET_PRUNE_MAX_TOTAL_SIZE }}
+        run: |
+          if ! command -v target-prune >/dev/null 2>&1; then
+            cargo install --locked target-prune
+          fi
+          dir="${CARGO_TARGET_DIR:-target}"
+          if [ -d "$dir" ]; then
+            du -sh "$dir" || true
+            target-prune prune --apply --max-total-size "$TP_MAX_TOTAL" "$dir"
+            du -sh "$dir" || true
+          else
+            echo "no target dir at $dir, nothing to prune"
+          fi
       # A wrapper that never reached sccache (e.g. clobbered by mise [env]) shows as zero
       # compile requests; warn so it is not mistaken for a working cache.
       - name: sccache stats

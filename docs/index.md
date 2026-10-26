@@ -78,6 +78,7 @@ jobs:
 | `sccache` | `false` | Use sccache with Cloudflare R2 (see below). |
 | `sccache-bucket` | `""` | R2 bucket; empty uses the caller's variable `SCCACHE_BUCKET`. |
 | `sccache-endpoint` | `""` | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`; empty uses the caller's variable `SCCACHE_ENDPOINT`. |
+| `target-prune-max-total-size` | `""` | Prune the target dir after tests/build with [target-prune](https://github.com/pyrlyn/crates/tree/main/rust/target-prune) to this total size (e.g. `12G`). Empty falls back to the variable `TARGET_PRUNE_MAX_TOTAL_SIZE`; both empty = off. See [target-prune step](#target-prune-step). |
 
 The caller's `mise.toml` should pin Rust, for example:
 
@@ -172,3 +173,27 @@ committing its directory. Rust `insta` text snapshots do not depend on the toolc
     env-prefix: COX
     override: ""   # e.g. hosted-pending until the real key is known
 ```
+
+## target-prune step
+
+Persistent target dirs on self-hosted runners grow without bound. `ci-rust.yml` can run
+[`target-prune`](https://github.com/pyrlyn/crates/tree/main/rust/target-prune) at the end of
+each `rust` / `rust-other` matrix entry, after test, doctests and build.
+
+- **How it works:** `target-prune prune --apply --max-total-size <N> "${CARGO_TARGET_DIR:-target}"`.
+  It keeps the newest build runs (plus their dependencies) and trims old incremental sessions
+  until the whole target dir fits `<N>`. A target-prune already on PATH is used (preinstall it on
+  self-hosted runners); otherwise `cargo install --locked target-prune` runs first.
+- **Enable for every Rust repo:** set the org (or repo) variable
+  `TARGET_PRUNE_MAX_TOTAL_SIZE`, e.g. `gh variable set TARGET_PRUNE_MAX_TOTAL_SIZE --org pyrlyn --body 12G`.
+  Per caller: `with: target-prune-max-total-size: 12G` (wins over the variable).
+- **Disable:** leave both empty (default), or delete the variable.
+- **Test:** `self-test.yml` keeps it off (default); to try it, set the input on a caller branch and
+  check the `target-prune` step log (sizes before/after).
+- **Limitations:** Unix only (skipped on Windows); `continue-on-error`, so a failure never fails
+  CI; on GitHub-hosted runners the target dir is discarded anyway, so it only saves disk on
+  persistent runners; the size is a target, not a hard cap (see the crate README).
+
+Local dev machines: `cargo install target-prune`, then e.g. a mise task
+`[tasks.prune] run = "target-prune prune --apply --max-total-size 12G target"`, or wrap the build:
+`target-prune run --apply --max-total-size 12G -- cargo test`.
