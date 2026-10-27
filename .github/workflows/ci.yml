@@ -304,7 +304,7 @@ jobs:
           JOB_ENV: ${{ matrix.env }}
         run: jq -r 'to_entries[] | "\(.key)=\(.value)"' <<<"$JOB_ENV" >> "$GITHUB_ENV"
       - if: matrix.mise == 'true' && env.MACOS_OFF != 'true'
-        uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+        uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
         with:
           install_args: ${{ matrix.mise-install-args }}
       - name: rustc is the mise.toml pin
@@ -316,11 +316,11 @@ jobs:
           rustc --version | grep -q "^rustc $version " \
             || { echo "::error::rustc is not the mise.toml pin $version"; exit 1; }
       - if: matrix.rust-cache && env.MACOS_OFF != 'true'
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           key: ${{ matrix.name }}
       - if: matrix.tools != '' && env.MACOS_OFF != 'true'
-        uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: ${{ matrix.tools }}
       - name: Setup

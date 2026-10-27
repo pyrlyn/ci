@@ -89,7 +89,7 @@ jobs:
           fetch-depth: 0 # tags and history decide the next version
           persist-credentials: false
       - if: inputs.mise
-        uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+        uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
       - name: Is a release still being published?
         id: pending
         env:
@@ -107,7 +107,7 @@ jobs:
             echo "::notice title=release-plz::$tag is not released yet; release PR left alone"
           fi
       - if: steps.pending.outputs.pending == 'false'
-        uses: release-plz/action@8921286633dfa0c4020f7f30bd1c14fe19cbb10e # v0.5.142
+        uses: release-plz/action@6caa8d34f74d82b0dc76a18edd1cc3d6801c9baf # v0.5.143
         with:
           command: release-pr
         env:

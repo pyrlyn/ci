@@ -88,7 +88,7 @@ jobs:
           persist-credentials: false
       # install_args pins the tool without reading the caller's mise.toml. Outside
       # workflow_call the inputs are empty; the fallback matches this repository's mise.toml.
-      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+      - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
         with:
           install_args: github:jdx/jactionlint@${{ inputs.jactionlint-version || '2.0.2' }}
       - name: jactionlint
