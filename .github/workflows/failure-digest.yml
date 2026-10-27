@@ -40,7 +40,7 @@ env:
 
 jobs:
   digest:
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 10
     permissions:
       contents: read

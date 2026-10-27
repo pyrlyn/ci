@@ -76,7 +76,7 @@ jobs:
       && github.actor == 'dependabot[bot]'
       && github.event.pull_request.user.login == 'dependabot[bot]'
       && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     # Up to `wait-minutes` (max 90) of it is waiting for `wait-workflow`.
     timeout-minutes: 100
     permissions:
@@ -189,7 +189,7 @@ jobs:
       && github.actor == 'dependabot[bot]'
       && github.event.pull_request.user.login == 'dependabot[bot]'
       && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 5
     permissions:
       actions: read

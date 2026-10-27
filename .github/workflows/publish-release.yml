@@ -53,7 +53,7 @@ permissions:
   contents: read
 jobs:
   publish:
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: write
     outputs:

@@ -40,7 +40,7 @@ on:
         description: ci-rust.yml `fmt-runs-on`.
         type: string
         required: false
-        default: xcode-27-local
+        default: ubuntu-latest
       rust-working-directory:
         description: ci-rust.yml `working-directory`.
         type: string
@@ -160,7 +160,7 @@ on:
         description: codeql.yml `runs-on`.
         type: string
         required: false
-        default: xcode-27-local
+        default: ubuntu-latest
       semgrep:
         description: Run semgrep.yml.
         type: boolean

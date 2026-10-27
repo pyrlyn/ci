@@ -55,7 +55,7 @@ permissions:
 
 jobs:
   issues:
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 5
     permissions:
       issues: write
