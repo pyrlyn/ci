@@ -1,7 +1,7 @@
 name: macos-fallback
 
 # TEMPORARY fallback for the macOS checks of self-test.yml while the `xcode-27` jobs stay queued.
-# Default target: Ivan's local Mac, a self-hosted runner (labels self-hosted, macOS, ARM64;
+# Default target: the GitHub-hosted xcode-27 image. Self-hosted option kept: a self-hosted runner (labels self-hosted, macOS, ARM64;
 # the runner also carries xcode-27-local). Override `runner` with a JSON array of labels or a
 # GitHub-hosted label, e.g. '["macos-latest"]'. Xcode 27.x is required: self-hosted jobs use
 # DEVELOPER_DIR=/Applications/Xcode.app, hosted jobs use setup-xcode, and every job fails
@@ -14,7 +14,7 @@ on:
       runner:
         description: JSON array of runner labels, e.g. ["macos-latest"] for GitHub-hosted.
         required: false
-        default: '["self-hosted","macOS","ARM64"]'
+        default: '["xcode-27"]'
         type: string
       xcode-version:
         description: Xcode major (27 or 27.1) that must be in use; the job fails on any other version.
@@ -26,7 +26,7 @@ on:
       runner:
         description: JSON array of runner labels, e.g. ["macos-latest"] for GitHub-hosted.
         required: false
-        default: '["self-hosted","macOS","ARM64"]'
+        default: '["xcode-27"]'
         type: string
       xcode-version:
         description: Xcode major (27 or 27.1) that must be in use; the job fails on any other version.

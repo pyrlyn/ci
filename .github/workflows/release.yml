@@ -243,7 +243,7 @@ env:
 
 jobs:
   checks:
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 15
     permissions:
       contents: read
@@ -526,7 +526,7 @@ jobs:
   release:
     needs: [checks, build]
     if: ${{ !inputs.dry-run }}
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: write
       actions: write # cancel-run on failure
@@ -579,7 +579,7 @@ jobs:
   publish:
     needs: [checks, release]
     if: ${{ !inputs.dry-run && (inputs.publish-crates || inputs.publish-command != '') }}
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     permissions:
       contents: read
       actions: write # cancel-run on failure
@@ -628,7 +628,7 @@ jobs:
       always() && inputs.notify-maintainer != ''
       && !inputs.dry-run
       && contains(needs.*.result, 'failure')
-    runs-on: ${{ vars.CI_RUNNER || 'xcode-27-local' }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 5
     permissions:
       actions: read # failed job names
